@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
@@ -9,18 +10,65 @@ from app.db.base import Base
 class Doctor(Base):
     __tablename__ = "doctors"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    specialization: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    clinic_address: Mapped[str | None] = mapped_column(Text, nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+    )
+
+    specialization: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    # India-only mobile number.
+    # Application/schema validation ensures exactly 10 digits.
+    # Database uniqueness prevents duplicate doctor phone numbers.
+    phone: Mapped[str | None] = mapped_column(
+        String(10),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+
+    # Email is normalized to lowercase by the Pydantic schema.
+    # Database uniqueness prevents duplicate doctor email addresses.
+    email: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+
+    clinic_address: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
     )
 
-    patients = relationship("Patient", back_populates="referred_by_doctor")
+    patients = relationship(
+        "Patient",
+        back_populates="referred_by_doctor",
+    )
