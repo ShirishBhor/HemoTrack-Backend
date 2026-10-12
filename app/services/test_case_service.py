@@ -15,6 +15,8 @@ It handles:
 Patient-specific test results and discounts are not handled here.
 """
 
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -22,6 +24,8 @@ from sqlalchemy.orm import Session
 
 from app.models.test_case import TestCase
 from app.schemas.test_case import TestCaseCreate, TestCaseUpdate
+
+logger = logging.getLogger(__name__)
 
 
 def get_test_case(
@@ -132,10 +136,7 @@ def create_test_case(
     except IntegrityError as exc:
         db.rollback()
 
-        # Print exact database error in terminal
-        print("\n========== TEST CASE INTEGRITY ERROR ==========")
-        print(exc)
-        print("================================================\n")
+        logger.error("Test case integrity error on create", exc_info=True)
 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -145,10 +146,7 @@ def create_test_case(
     except SQLAlchemyError as exc:
         db.rollback()
 
-        # Print exact database error in terminal
-        print("\n========== TEST CASE DATABASE ERROR ==========")
-        print(exc)
-        print("===============================================\n")
+        logger.error("Test case database error on create", exc_info=True)
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -195,10 +193,7 @@ def update_test_case(
     except IntegrityError as exc:
         db.rollback()
 
-        # Print exact database error in terminal
-        print("\n========== TEST CASE UPDATE INTEGRITY ERROR ==========")
-        print(exc)
-        print("=======================================================\n")
+        logger.error("Test case integrity error on update", exc_info=True)
 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -208,10 +203,7 @@ def update_test_case(
     except SQLAlchemyError as exc:
         db.rollback()
 
-        # Print exact database error in terminal
-        print("\n========== TEST CASE UPDATE DATABASE ERROR ==========")
-        print(exc)
-        print("=====================================================\n")
+        logger.error("Test case database error on update", exc_info=True)
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -249,10 +241,7 @@ def deactivate_test_case(
     except SQLAlchemyError as exc:
         db.rollback()
 
-        # Print exact database error in terminal
-        print("\n========== TEST CASE DEACTIVATE DATABASE ERROR ==========")
-        print(exc)
-        print("=========================================================\n")
+        logger.error("Test case database error on deactivate", exc_info=True)
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

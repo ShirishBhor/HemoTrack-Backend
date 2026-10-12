@@ -206,11 +206,11 @@ def update_test_case(
 # DEACTIVATE TEST CASE
 # ============================================================
 
-@router.delete(
-    "/{test_case_id}",
+@router.patch(
+    "/{test_case_id}/deactivate",
     response_model=TestCaseRead,
 )
-def delete_test_case(
+def deactivate_test_case(
     db: DbSession,
     _: TestCaseWriteUser,
     test_case_id: int = Path(
