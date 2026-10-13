@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.patient import PatientType
@@ -56,6 +56,30 @@ def create_patient(
     return patient_service.create_patient(db, payload, created_by=current_user.id)
 
 
+@router.get("/uhid/{uhid}", response_model=PatientRead)
+def get_patient_by_uhid(
+    uhid: str,
+    db: DbSession,
+    _: CurrentUser,
+):
+    patient = patient_service.get_patient_by_uhid(db, uhid)
+    if patient is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+    return patient
+
+
+@router.get("/barcode/{barcode}", response_model=PatientRead)
+def get_patient_by_barcode(
+    barcode: str,
+    db: DbSession,
+    _: CurrentUser,
+):
+    patient = patient_service.get_patient_by_barcode(db, barcode)
+    if patient is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+    return patient
+
+
 @router.get("/{patient_id}", response_model=PatientRead)
 def get_patient(
     patient_id: int,
@@ -84,3 +108,4 @@ def cancel_patient(
 ):
     patient = patient_service.get_patient_or_404(db, patient_id)
     return patient_service.cancel_patient(db, patient)
+
