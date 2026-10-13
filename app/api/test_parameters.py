@@ -10,21 +10,36 @@ Patient-specific result values are not stored through these endpoints.
 """
 
 
-from fastapi import APIRouter, Depends, Path, Query, status
+from typing import Annotated
+
+from fastapi import APIRouter, Body, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import UserRole
 from app.schemas.test_parameter import (
+    FormulaValidationRequest,
+    FormulaValidationResponse,
+    ParameterReferenceRangeCreate,
+    ParameterReferenceRangeRead,
+    ParameterReferenceRangeUpdate,
     TestParameterCreate,
     TestParameterRead,
     TestParameterUpdate,
 )
 from app.services.test_parameter_service import (
+    create_reference_range,
     create_test_parameter,
     deactivate_test_parameter,
+    delete_reference_range,
+    delete_test_parameter,
+    get_distinct_units,
     get_test_parameter_or_404,
+    list_reference_ranges,
     list_test_parameters,
+    reactivate_test_parameter,
+    update_reference_range,
     update_test_parameter,
+    validate_formula_for_test_case,
 )
 
 
@@ -72,41 +87,103 @@ def create_parameter(
 def get_parameters(
     db: DbSession,
     _: CurrentUser,
-    test_case_id: int | None = Query(
-        default=None,
-        gt=0,
-        description="Filter by Test Case ID",
-    ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active Test Parameters",
-    ),
-    skip: int = Query(
-        default=0,
-        ge=0,
-        description="Number of records to skip",
-    ),
-    limit: int = Query(
-        default=50,
-        ge=1,
-        le=200,
-        description="Maximum number of records to return",
-    ),
+    test_case_id: Annotated[
+        int | None,
+        Query(
+            gt=0,
+            description="Filter by Test Case ID",
+        ),
+    ] = None,
+    search: Annotated[
+        str | None,
+        Query(
+            min_length=1,
+            max_length=255,
+            description="Search by parameter name or parameter code",
+        ),
+    ] = None,
+    active_only: Annotated[
+        bool,
+        Query(
+            description="Return only active Test Parameters",
+        ),
+    ] = True,
+    skip: Annotated[
+        int,
+        Query(
+            ge=0,
+            description="Number of records to skip",
+        ),
+    ] = 0,
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=200,
+            description="Maximum number of records to return",
+        ),
+    ] = 50,
 ):
     """
     Get all Test Parameters.
 
     Supports:
     - Filter by test_case_id
+    - Search by parameter name/code
     - Active/inactive filtering
     - Pagination
     """
     return list_test_parameters(
         db=db,
         test_case_id=test_case_id,
+        search=search,
         active_only=active_only,
         skip=skip,
         limit=limit,
+    )
+
+
+# ============================================================
+# GET STANDARD AND USED MEASUREMENT UNITS
+# ============================================================
+
+@router.get(
+    "/units",
+    response_model=list[str],
+)
+def list_units(
+    db: DbSession,
+    _: CurrentUser,
+):
+    """
+    Get distinct laboratory measurement units used across the system,
+    merged with standard clinical units catalog.
+    """
+    return get_distinct_units(db=db)
+
+
+# ============================================================
+# VALIDATE FORMULA FOR TEST CASE
+# ============================================================
+
+@router.post(
+    "/validate-formula",
+    response_model=FormulaValidationResponse,
+    dependencies=[Depends(TestParameterWriteUser)],
+)
+def validate_formula(
+    payload: FormulaValidationRequest,
+    db: DbSession,
+):
+    """
+    Validate a mathematical formula against parameter codes in a test case.
+
+    Only ADMIN and LAB_MANAGER can validate test formulas.
+    """
+    return validate_formula_for_test_case(
+        db=db,
+        test_case_id=payload.test_case_id,
+        formula=payload.formula,
     )
 
 
@@ -196,4 +273,166 @@ def deactivate_parameter(
     return deactivate_test_parameter(
         db=db,
         test_parameter_id=test_parameter_id,
+    )
+
+
+# ============================================================
+# REACTIVATE TEST PARAMETER
+# ============================================================
+
+@router.patch(
+    "/{test_parameter_id}/reactivate",
+    response_model=TestParameterRead,
+    dependencies=[Depends(TestParameterWriteUser)],
+)
+def reactivate_parameter(
+    db: DbSession,
+    test_parameter_id: int = Path(
+        ...,
+        gt=0,
+        description="Test Parameter ID",
+    ),
+):
+    """
+    Reactivate a previously deactivated Test Parameter.
+
+    Only ADMIN and LAB_MANAGER can reactivate Test Parameters.
+    """
+    return reactivate_test_parameter(
+        db=db,
+        test_parameter_id=test_parameter_id,
+    )
+
+
+# ============================================================
+# DELETE TEST PARAMETER
+# ============================================================
+
+@router.delete(
+    "/{test_parameter_id}",
+    dependencies=[Depends(TestParameterWriteUser)],
+)
+def delete_parameter(
+    db: DbSession,
+    test_parameter_id: int = Path(
+        ...,
+        gt=0,
+        description="Test Parameter ID",
+    ),
+):
+    """
+    Permanently delete a Test Parameter.
+
+    Only ADMIN and LAB_MANAGER can delete Test Parameters.
+    """
+    return delete_test_parameter(
+        db=db,
+        test_parameter_id=test_parameter_id,
+    )
+
+
+# ============================================================
+# REFERENCE RANGES (AGE AND GENDER SPECIFIC)
+# ============================================================
+
+@router.get(
+    "/{test_parameter_id}/reference-ranges",
+    response_model=list[ParameterReferenceRangeRead],
+)
+def get_parameter_reference_ranges(
+    db: DbSession,
+    _: CurrentUser,
+    test_parameter_id: int = Path(
+        ...,
+        gt=0,
+        description="Test Parameter ID",
+    ),
+    active_only: bool = Query(
+        default=True,
+        description="Return only active reference ranges",
+    ),
+):
+    """
+    Get all age- and gender-specific reference ranges for a Test Parameter.
+    """
+    return list_reference_ranges(
+        db=db,
+        parameter_id=test_parameter_id,
+        active_only=active_only,
+    )
+
+
+@router.post(
+    "/{test_parameter_id}/reference-ranges",
+    response_model=ParameterReferenceRangeRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(TestParameterWriteUser)],
+)
+def add_parameter_reference_range(
+    db: DbSession,
+    payload: ParameterReferenceRangeCreate,
+    test_parameter_id: int = Path(
+        ...,
+        gt=0,
+        description="Test Parameter ID",
+    ),
+):
+    """
+    Add a new age- and gender-specific reference range to a Test Parameter.
+
+    Only ADMIN and LAB_MANAGER can create reference ranges.
+    """
+    return create_reference_range(
+        db=db,
+        parameter_id=test_parameter_id,
+        payload=payload,
+    )
+
+
+@router.patch(
+    "/reference-ranges/{range_id}",
+    response_model=ParameterReferenceRangeRead,
+    dependencies=[Depends(TestParameterWriteUser)],
+)
+def update_range(
+    db: DbSession,
+    payload: ParameterReferenceRangeUpdate,
+    range_id: int = Path(
+        ...,
+        gt=0,
+        description="Reference Range ID",
+    ),
+):
+    """
+    Update an existing reference range.
+
+    Only ADMIN and LAB_MANAGER can update reference ranges.
+    """
+    return update_reference_range(
+        db=db,
+        range_id=range_id,
+        payload=payload,
+    )
+
+
+@router.delete(
+    "/reference-ranges/{range_id}",
+    dependencies=[Depends(TestParameterWriteUser)],
+)
+def delete_range(
+    db: DbSession,
+    range_id: int = Path(
+        ...,
+        gt=0,
+        description="Reference Range ID",
+    ),
+):
+    """
+    Delete a reference range.
+
+    Only ADMIN and LAB_MANAGER can delete reference ranges.
+    """
+    return delete_reference_range(
+        db=db,
+        range_id=range_id,
     )

@@ -10,9 +10,13 @@ in this table.
 
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.models.test_parameter import TestParameter
 
 from app.db.base import Base
 
@@ -78,4 +82,11 @@ class TestCase(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    parameters: Mapped[list["TestParameter"]] = relationship(
+        "TestParameter",
+        back_populates="test_case",
+        order_by="TestParameter.display_order",
+        cascade="all, delete-orphan",
     )

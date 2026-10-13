@@ -1,5 +1,27 @@
 from app.schemas.doctor import DoctorCreate, DoctorRead, DoctorUpdate
 from app.schemas.patient import PatientCreate, PatientRead, PatientUpdate
+from app.schemas.test_case import (
+    TestCaseCreate,
+    TestCaseRead,
+    TestCaseUpdate,
+    TestCaseWithParametersRead,
+)
+from app.schemas.test_parameter import (
+    CopyParametersRequest,
+    CopyParametersResponse,
+    FormulaValidationRequest,
+    FormulaValidationResponse,
+    ParameterOrderItem,
+    ParameterReferenceRangeCreate,
+    ParameterReferenceRangeRead,
+    ParameterReferenceRangeUpdate,
+    ParameterReorderRequest,
+    TestParameterBulkCreate,
+    TestParameterBulkItem,
+    TestParameterCreate,
+    TestParameterRead,
+    TestParameterUpdate,
+)
 from app.schemas.user import LoginRequest, Token, UserCreate, UserRead, UserUpdate
 
 __all__ = [
@@ -14,4 +36,22 @@ __all__ = [
     "PatientCreate",
     "PatientRead",
     "PatientUpdate",
+    "TestCaseCreate",
+    "TestCaseRead",
+    "TestCaseUpdate",
+    "TestCaseWithParametersRead",
+    "TestParameterCreate",
+    "TestParameterRead",
+    "TestParameterUpdate",
+    "TestParameterBulkItem",
+    "TestParameterBulkCreate",
+    "ParameterOrderItem",
+    "ParameterReorderRequest",
+    "ParameterReferenceRangeCreate",
+    "ParameterReferenceRangeRead",
+    "ParameterReferenceRangeUpdate",
+    "FormulaValidationRequest",
+    "FormulaValidationResponse",
+    "CopyParametersRequest",
+    "CopyParametersResponse",
 ]

@@ -20,7 +20,7 @@ import logging
 from fastapi import HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.test_case import TestCase
 from app.schemas.test_case import TestCaseCreate, TestCaseUpdate
@@ -246,6 +246,60 @@ def deactivate_test_case(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to deactivate test case",
+        ) from exc
+
+    return test_case
+
+
+def get_test_case_with_parameters_or_404(
+    db: Session,
+    test_case_id: int,
+) -> TestCase:
+    """
+    Get a Test Case by ID along with its associated parameters
+    loaded via the SQLAlchemy relationship.
+    """
+    query = (
+        select(TestCase)
+        .where(TestCase.id == test_case_id)
+        .options(selectinload(TestCase.parameters))
+    )
+    test_case = db.scalar(query)
+
+    if test_case is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Test case not found",
+        )
+
+    return test_case
+
+
+def reactivate_test_case(
+    db: Session,
+    test_case: TestCase,
+) -> TestCase:
+    """
+    Reactivate a Test Case.
+    """
+    if test_case.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Test case is already active",
+        )
+
+    test_case.is_active = True
+
+    try:
+        db.add(test_case)
+        db.commit()
+        db.refresh(test_case)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.error("Test case database error on reactivate", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reactivate test case",
         ) from exc
 
     return test_case

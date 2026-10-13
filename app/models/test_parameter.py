@@ -7,6 +7,7 @@ laboratory test cases. Patient-specific results are stored separately.
 """
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -21,6 +22,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.parameter_reference_range import ParameterReferenceRange
+    from app.models.test_case import TestCase
 
 
 class TestParameter(Base):
@@ -80,6 +85,41 @@ class TestParameter(Base):
         server_default="number",
     )
 
+    # Comma-separated or JSON list of selectable values for select data_type
+    options: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    # Calculated parameter support (e.g. Globulin = TP - ALB)
+    is_calculated: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
+
+    formula: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    # Critical / Panic alert boundaries (e.g., Potassium < 2.5 or > 6.5)
+    critical_low: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    critical_high: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    critical_action: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     is_required: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -116,5 +156,11 @@ class TestParameter(Base):
 
     test_case = relationship(
         "TestCase",
-        backref="parameters",
+        back_populates="parameters",
+    )
+
+    reference_ranges: Mapped[list["ParameterReferenceRange"]] = relationship(
+        "ParameterReferenceRange",
+        back_populates="parameter",
+        cascade="all, delete-orphan",
     )

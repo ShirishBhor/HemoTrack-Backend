@@ -15,6 +15,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.schemas.test_parameter import TestParameterRead
+
 
 class TestCaseBase(BaseModel):
     name: str = Field(
@@ -182,3 +184,7 @@ class TestCaseRead(TestCaseBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class TestCaseWithParametersRead(TestCaseRead):
+    parameters: list[TestParameterRead] = []
