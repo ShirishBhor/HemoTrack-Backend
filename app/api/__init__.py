@@ -1,11 +1,18 @@
 from fastapi import APIRouter
-from app.api import auth, doctors, patients, users, test_cases, test_parameters
+from app.api import accounts, auth, bills, doctors, expenses, patients, payments, refunds, tests, users, test_cases, test_parameters
 
 api_router = APIRouter(prefix="/api/v1")
 
 api_router.include_router(auth.router)
-api_router.include_router(users.router)
 api_router.include_router(doctors.router)
 api_router.include_router(patients.router)
 api_router.include_router(test_cases.router)
 api_router.include_router(test_parameters.router)
+api_router.include_router(tests.router)
+api_router.include_router(bills.router)
+api_router.include_router(payments.router)
+api_router.include_router(expenses.router)
+api_router.include_router(refunds.router)
+api_router.include_router(accounts.router)
+
+

@@ -19,18 +19,45 @@ class Gender(str, enum.Enum):
     OTHER = "other"
 
 
+class BloodGroup(str, enum.Enum):
+    A_POSITIVE = "A+"
+    A_NEGATIVE = "A-"
+    B_POSITIVE = "B+"
+    B_NEGATIVE = "B-"
+    AB_POSITIVE = "AB+"
+    AB_NEGATIVE = "AB-"
+    O_POSITIVE = "O+"
+    O_NEGATIVE = "O-"
+    UNKNOWN = "UNKNOWN"
+
+
+class MaritalStatus(str, enum.Enum):
+    SINGLE = "SINGLE"
+    MARRIED = "MARRIED"
+    DIVORCED = "DIVORCED"
+    WIDOWED = "WIDOWED"
+    OTHER = "OTHER"
+
+
 class Patient(Base):
     __tablename__ = "patients"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    uhid: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     gender: Mapped[Gender] = mapped_column(
         Enum(Gender, name="gender", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
     )
+    dob: Mapped[date | None] = mapped_column(Date, nullable=True)
     age_years: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     age_months: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     age_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    blood_group: Mapped[BloodGroup] = mapped_column(
+        Enum(BloodGroup, name="blood_group", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=BloodGroup.UNKNOWN,
+    )
     patient_type: Mapped[PatientType] = mapped_column(
         Enum(PatientType, name="patient_type", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
@@ -39,9 +66,19 @@ class Patient(Base):
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    national_id: Mapped[str | None] = mapped_column(String(50), index=True, nullable=True)
+    marital_status: Mapped[MaritalStatus | None] = mapped_column(
+        Enum(MaritalStatus, name="marital_status", values_callable=lambda x: [e.value for e in x]),
+        nullable=True,
+    )
+    guardian_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    emergency_contact_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    emergency_contact_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    relationship_to_patient: Mapped[str | None] = mapped_column(String(50), nullable=True)
     collection_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     received_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     reporting_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    sample_barcode: Mapped[str | None] = mapped_column(String(100), index=True, nullable=True)
     referred_by_doctor_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("doctors.id"),
@@ -67,3 +104,4 @@ class Patient(Base):
 
     referred_by_doctor = relationship("Doctor", back_populates="patients")
     created_by_user = relationship("User", back_populates="patients_created")
+

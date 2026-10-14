@@ -1,7 +1,8 @@
+from calendar import monthrange
 from datetime import date
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.doctor import Doctor
@@ -9,11 +10,69 @@ from app.models.patient import Patient, PatientType
 from app.schemas.patient import PatientCreate, PatientUpdate
 
 
+def calculate_age_from_dob(dob: date) -> tuple[int, int, int]:
+    today = date.today()
+    if dob > today:
+        return 0, 0, 0
+    years = today.year - dob.year
+    months = today.month - dob.month
+    days = today.day - dob.day
+
+    if days < 0:
+        months -= 1
+        prev_month = (today.month - 1) or 12
+        prev_year = today.year if today.month > 1 else today.year - 1
+        _, days_in_prev_month = monthrange(prev_year, prev_month)
+        days += days_in_prev_month
+
+    if months < 0:
+        years -= 1
+        months += 12
+
+    return max(0, years), max(0, months), max(0, days)
+
+
+def generate_uhid(db: Session) -> str:
+    current_year = date.today().year
+    prefix = f"HT-{current_year}-"
+    latest_patient = db.scalar(
+        select(Patient)
+        .where(Patient.uhid.like(f"{prefix}%"))
+        .order_by(Patient.id.desc())
+        .limit(1)
+    )
+    if latest_patient and latest_patient.uhid.startswith(prefix):
+        try:
+            seq_num = int(latest_patient.uhid.split("-")[-1]) + 1
+        except ValueError:
+            seq_num = db.scalar(select(func.count(Patient.id))) + 1
+    else:
+        seq_num = db.scalar(select(func.count(Patient.id))) + 1
+
+    return f"{prefix}{seq_num:05d}"
+
+
 def get_patient(db: Session, patient_id: int) -> Patient | None:
     return db.scalar(
         select(Patient)
         .options(joinedload(Patient.referred_by_doctor))
         .where(Patient.id == patient_id)
+    )
+
+
+def get_patient_by_uhid(db: Session, uhid: str) -> Patient | None:
+    return db.scalar(
+        select(Patient)
+        .options(joinedload(Patient.referred_by_doctor))
+        .where(Patient.uhid == uhid)
+    )
+
+
+def get_patient_by_barcode(db: Session, barcode: str) -> Patient | None:
+    return db.scalar(
+        select(Patient)
+        .options(joinedload(Patient.referred_by_doctor))
+        .where(Patient.sample_barcode == barcode)
     )
 
 
@@ -51,7 +110,16 @@ def list_patients(
         query = query.where(Patient.is_cancelled.is_(False), Patient.is_active.is_(True))
     if search:
         pattern = f"%{search.lower()}%"
-        query = query.where(func.lower(Patient.name).like(pattern))
+        query = query.where(
+            or_(
+                func.lower(Patient.name).like(pattern),
+                func.lower(Patient.phone).like(pattern),
+                func.lower(Patient.email).like(pattern),
+                func.lower(Patient.uhid).like(pattern),
+                func.lower(Patient.national_id).like(pattern),
+                func.lower(Patient.sample_barcode).like(pattern),
+            )
+        )
     if patient_type is not None:
         query = query.where(Patient.patient_type == patient_type)
     if doctor_id is not None:
@@ -64,7 +132,24 @@ def list_patients(
 
 def create_patient(db: Session, payload: PatientCreate, created_by: int | None) -> Patient:
     _validate_doctor_ref(db, payload.referred_by_doctor_id)
-    patient = Patient(**payload.model_dump(), created_by=created_by)
+    data = payload.model_dump()
+    if not data.get("uhid"):
+        data["uhid"] = generate_uhid(db)
+    else:
+        existing = get_patient_by_uhid(db, data["uhid"])
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="UHID already registered",
+            )
+
+    if data.get("dob"):
+        years, months, days = calculate_age_from_dob(data["dob"])
+        data["age_years"] = years
+        data["age_months"] = months
+        data["age_days"] = days
+
+    patient = Patient(**data, created_by=created_by)
     db.add(patient)
     db.commit()
     db.refresh(patient)
@@ -75,6 +160,20 @@ def update_patient(db: Session, patient: Patient, payload: PatientUpdate) -> Pat
     data = payload.model_dump(exclude_unset=True)
     if "referred_by_doctor_id" in data:
         _validate_doctor_ref(db, data["referred_by_doctor_id"])
+    if "uhid" in data and data["uhid"] != patient.uhid:
+        if data["uhid"]:
+            existing = get_patient_by_uhid(db, data["uhid"])
+            if existing and existing.id != patient.id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="UHID already registered",
+                )
+    if "dob" in data and data["dob"]:
+        years, months, days = calculate_age_from_dob(data["dob"])
+        data["age_years"] = years
+        data["age_months"] = months
+        data["age_days"] = days
+
     for field, value in data.items():
         setattr(patient, field, value)
     db.add(patient)
@@ -88,3 +187,4 @@ def cancel_patient(db: Session, patient: Patient) -> Patient:
     db.add(patient)
     db.commit()
     return get_patient_or_404(db, patient.id)
+

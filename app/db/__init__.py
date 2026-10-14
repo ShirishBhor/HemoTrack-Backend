@@ -1,5 +1,33 @@
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 
-__all__ = ["Base", "SessionLocal", "engine"]
+# Import models so Alembic and create_all see them.
+from app.models import (  # noqa: F401, E402
+    Bill,
+    BillItem,
+    Doctor,
+    Expense,
+    Patient,
+    Payment,
+    Refund,
+    TestCategory,
+    TestMaster,
+    User,
+)
+
+__all__ = [
+    "Base",
+    "User",
+    "Doctor",
+    "Patient",
+    "TestCategory",
+    "TestMaster",
+    "Bill",
+    "BillItem",
+    "Payment",
+    "Expense",
+    "Refund",
+]
+
+
 
