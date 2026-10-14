@@ -18,11 +18,9 @@ __all__ = [
     "Patient",
     "PatientType",
     "Gender",
-<<<<<<< HEAD
     "TestCase",
     "TestParameter",
     "ParameterReferenceRange",
-=======
     "TestCategory",
     "TestMaster",
     "Bill",
@@ -36,7 +34,6 @@ __all__ = [
     "ExpensePaymentMode",
     "Refund",
     "RefundMode",
->>>>>>> AbhishekSawant-development
 ]
 
 
