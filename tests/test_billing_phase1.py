@@ -12,7 +12,7 @@ from app.db import Base
 from app.main import app
 from app.models.doctor import Doctor
 from app.models.patient import Gender, Patient, PatientType
-from app.models.test import TestCategory, TestMaster
+from app.models.test_case import TestCase
 from app.models.user import User, UserRole
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -85,29 +85,21 @@ class TestBillingCorePhase1(unittest.TestCase):
         self.admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
         self.rec_headers = {"Authorization": f"Bearer {self.rec_token}"}
 
-        # Seed categories and tests
-        category = TestCategory(name="Hematology", description="Blood tests")
-        db.add(category)
-        db.commit()
-        db.refresh(category)
-
-        self.cbc_test = TestMaster(
-            category_id=category.id,
-            test_code="CBC",
+        # Seed test cases
+        self.cbc_test = TestCase(
+            code="CBC",
             name="Complete Blood Count",
             price=Decimal("350.00"),
             is_active=True,
         )
-        self.lft_test = TestMaster(
-            category_id=category.id,
-            test_code="LFT",
+        self.lft_test = TestCase(
+            code="LFT",
             name="Liver Function Test",
             price=Decimal("750.00"),
             is_active=True,
         )
-        self.inactive_test = TestMaster(
-            category_id=category.id,
-            test_code="OLD_TEST",
+        self.inactive_test = TestCase(
+            code="OLD_TEST",
             name="Obsolete Test",
             price=Decimal("200.00"),
             is_active=False,
@@ -130,36 +122,6 @@ class TestBillingCorePhase1(unittest.TestCase):
     def tearDown(self):
         app.dependency_overrides.clear()
         Base.metadata.drop_all(bind=self.engine)
-
-    def test_test_catalog_crud_and_permissions(self):
-        # 1. Receptionist cannot create a test (Requires ADMIN or LAB_MANAGER)
-        payload = {
-            "test_code": "kft",
-            "name": "Kidney Function Test",
-            "price": "600.00",
-        }
-        res = self.client.post("/api/v1/tests", json=payload, headers=self.rec_headers)
-        self.assertEqual(res.status_code, 403)
-
-        # 2. Admin can create a test and test_code is normalized to uppercase
-        res = self.client.post("/api/v1/tests", json=payload, headers=self.admin_headers)
-        self.assertEqual(res.status_code, 201)
-        data = res.json()
-        self.assertEqual(data["test_code"], "KFT")
-        self.assertEqual(Decimal(str(data["price"])), Decimal("600.00"))
-
-        # 3. Duplicate test_code is rejected
-        res = self.client.post("/api/v1/tests", json=payload, headers=self.admin_headers)
-        self.assertEqual(res.status_code, 400)
-
-        # 4. Negative price is rejected by schema
-        invalid_payload = {
-            "test_code": "NEG",
-            "name": "Negative Price Test",
-            "price": "-50.00",
-        }
-        res = self.client.post("/api/v1/tests", json=invalid_payload, headers=self.admin_headers)
-        self.assertEqual(res.status_code, 422)
 
     def test_bill_creation_with_validations_and_math(self):
         # Bill with CBC (₹350) + LFT (₹750) = Subtotal ₹1100
@@ -228,14 +190,11 @@ class TestBillingCorePhase1(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
         bill_id = res.json()["id"]
 
-        # 2. Lab updates CBC price to ₹500
-        patch_res = self.client.patch(
-            f"/api/v1/tests/{self.cbc_id}",
-            json={"price": "500.00"},
-            headers=self.admin_headers,
-        )
-        self.assertEqual(patch_res.status_code, 200)
-        self.assertEqual(Decimal(str(patch_res.json()["price"])), Decimal("500.00"))
+        # 2. Lab updates CBC price to ₹500 in master test catalog
+        with self.TestingSessionLocal() as db:
+            test = db.get(TestCase, self.cbc_id)
+            test.price = Decimal("500.00")
+            db.commit()
 
         # 3. Retrieve original bill - must remain ₹350
         get_res = self.client.get(f"/api/v1/bills/{bill_id}", headers=self.rec_headers)

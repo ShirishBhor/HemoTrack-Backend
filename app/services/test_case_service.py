@@ -23,6 +23,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.test_case import TestCase
+from app.models.test_category import TestCategory
 from app.schemas.test_case import TestCaseCreate, TestCaseUpdate
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ def list_test_cases(
     limit: int = 50,
     search: str | None = None,
     active_only: bool = True,
+    category_id: int | None = None,
 ) -> list[TestCase]:
     """
     Return Test Cases with:
@@ -78,6 +80,7 @@ def list_test_cases(
     - Pagination
     - Search by name/code
     - Active/inactive filtering
+    - Category filtering
     """
 
     query = select(TestCase)
@@ -102,6 +105,10 @@ def list_test_cases(
                 )
             )
 
+    # Filter by category
+    if category_id is not None:
+        query = query.where(TestCase.category_id == category_id)
+
     query = (
         query
         .order_by(TestCase.name.asc())
@@ -114,6 +121,33 @@ def list_test_cases(
     )
 
 
+def _resolve_category(
+    db: Session,
+    category_id: int | None,
+) -> None:
+    """
+    Validate that the given category_id references an active TestCategory.
+    Raises HTTP 422 if the category is not found or inactive.
+    """
+    if category_id is None:
+        return
+
+    category = db.get(TestCategory, category_id)
+
+    if category is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Test category with id {category_id} does not exist",
+        )
+
+    if not category.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Test category '{category.name}' is inactive. "
+                   "Please use an active category.",
+        )
+
+
 def create_test_case(
     db: Session,
     payload: TestCaseCreate,
@@ -121,6 +155,7 @@ def create_test_case(
     """
     Create a new Test Case.
     """
+    _resolve_category(db, payload.category_id)
 
     test_case = TestCase(
         **payload.model_dump()
@@ -174,6 +209,10 @@ def update_test_case(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one field is required for update",
         )
+
+    # Validate category_id if it was supplied in the payload
+    if "category_id" in data:
+        _resolve_category(db, data["category_id"])
 
     # Update supplied fields
     for field, value in data.items():

@@ -17,7 +17,6 @@ from app.models.expense import Expense, ExpenseCategory, ExpensePaymentMode
 from app.models.patient import Gender, Patient, PatientType
 from app.models.payment import Payment, PaymentMode
 from app.models.refund import Refund, RefundMode
-from app.models.test import TestCategory, TestMaster
 from app.models.user import User, UserRole
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

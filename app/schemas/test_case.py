@@ -15,6 +15,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.schemas.test_category import TestCategoryRead
 from app.schemas.test_parameter import TestParameterRead
 
 
@@ -50,6 +51,11 @@ class TestCaseBase(BaseModel):
         default=None,
         max_length=100,
         description="Turnaround time for the test",
+    )
+
+    category_id: int | None = Field(
+        default=None,
+        description="ID of the Test Category this test belongs to",
     )
 
     @field_validator("name")
@@ -131,6 +137,11 @@ class TestCaseUpdate(BaseModel):
 
     is_active: bool | None = None
 
+    category_id: int | None = Field(
+        default=None,
+        description="ID of the Test Category this test belongs to",
+    )
+
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str | None) -> str | None:
@@ -184,6 +195,7 @@ class TestCaseRead(TestCaseBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    category: TestCategoryRead | None = None
 
 
 class TestCaseWithParametersRead(TestCaseRead):

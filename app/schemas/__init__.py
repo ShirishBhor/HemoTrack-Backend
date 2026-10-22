@@ -5,7 +5,7 @@ from app.schemas.bill import (
     BillItemRead,
     BillRead,
 )
-from app.schemas.doctor import DoctorCreate, DoctorRead, DoctorUpdate
+from app.schemas.doctor import DoctorCreate, DoctorListResponse, DoctorRead, DoctorUpdate
 from app.schemas.patient import PatientCreate, PatientRead, PatientUpdate
 from app.schemas.payment import PaymentCreate, PaymentRead
 from app.schemas.receipt import (
@@ -18,14 +18,6 @@ from app.schemas.receipt import (
 )
 
 
-from app.schemas.test import (
-    TestCategoryCreate,
-    TestCategoryRead,
-    TestCategoryUpdate,
-    TestMasterCreate,
-    TestMasterRead,
-    TestMasterUpdate,
-)
 from app.schemas.test_case import (
     TestCaseCreate,
     TestCaseRead,
@@ -69,6 +61,7 @@ __all__ = [
     "DoctorCreate",
     "DoctorRead",
     "DoctorUpdate",
+    "DoctorListResponse",
     "PatientCreate",
     "PatientRead",
     "PatientUpdate",
@@ -90,12 +83,6 @@ __all__ = [
     "FormulaValidationResponse",
     "CopyParametersRequest",
     "CopyParametersResponse",
-    "TestCategoryCreate",
-    "TestCategoryRead",
-    "TestCategoryUpdate",
-    "TestMasterCreate",
-    "TestMasterRead",
-    "TestMasterUpdate",
     "BillCancel",
     "BillCreate",
     "BillItemCreate",

@@ -12,11 +12,13 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.models.test_parameter import TestParameter
+    from app.models.bill import BillItem
+    from app.models.test_category import TestCategory
 
 from app.db.base import Base
 
@@ -64,6 +66,13 @@ class TestCase(Base):
         nullable=True,
     )
 
+    category_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("test_categories.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -89,4 +98,14 @@ class TestCase(Base):
         back_populates="test_case",
         order_by="TestParameter.display_order",
         cascade="all, delete-orphan",
+    )
+
+    bill_items: Mapped[list["BillItem"]] = relationship(
+        "BillItem",
+        back_populates="test",
+    )
+
+    category: Mapped["TestCategory | None"] = relationship(
+        "TestCategory",
+        back_populates="test_cases",
     )

@@ -14,7 +14,7 @@ from app.main import app
 from app.models.bill import Bill, BillItem, BillStatus, DiscountType
 from app.models.doctor import Doctor
 from app.models.patient import Gender, Patient, PatientType
-from app.models.test import TestCategory, TestMaster
+from app.models.test_case import TestCase
 from app.models.user import User, UserRole
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -78,19 +78,17 @@ class TestReceiptAndCancellationPhase3(unittest.TestCase):
             patient_type=PatientType.OPD,
             is_active=True,
         )
-        category = TestCategory(name="Biochemistry")
-        db.add_all([admin, manager, receptionist, doctor, patient, category])
+        category_dummy = None  # no longer needed
+        db.add_all([admin, manager, receptionist, doctor, patient])
         db.commit()
         db.refresh(admin)
         db.refresh(manager)
         db.refresh(receptionist)
         db.refresh(doctor)
         db.refresh(patient)
-        db.refresh(category)
 
-        test = TestMaster(
-            category_id=category.id,
-            test_code="CBC",
+        test = TestCase(
+            code="CBC",
             name="Complete Blood Count",
             price=Decimal("500.00"),
             is_active=True,

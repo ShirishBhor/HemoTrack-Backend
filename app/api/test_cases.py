@@ -93,6 +93,11 @@ def list_test_cases(
         default=True,
         description="Return only active Test Cases",
     ),
+    category_id: int | None = Query(
+        default=None,
+        gt=0,
+        description="Filter by Test Category ID",
+    ),
 ):
     """
     Get all laboratory Test Cases.
@@ -101,6 +106,7 @@ def list_test_cases(
     - Pagination
     - Search by test name/code
     - Active/inactive filtering
+    - Filter by category
     """
 
     return test_case_service.list_test_cases(
@@ -109,6 +115,7 @@ def list_test_cases(
         limit=limit,
         search=search,
         active_only=active_only,
+        category_id=category_id,
     )
 
 

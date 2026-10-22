@@ -14,7 +14,7 @@ from app.models.bill import Bill, BillItem, BillStatus, DiscountType
 from app.models.doctor import Doctor
 from app.models.patient import Gender, Patient, PatientType
 from app.models.payment import PaymentMode
-from app.models.test import TestCategory, TestMaster
+from app.models.test_case import TestCase
 from app.models.user import User, UserRole
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -63,17 +63,14 @@ class TestPaymentsPhase2(unittest.TestCase):
             phone="9876543210",
             is_active=True,
         )
-        category = TestCategory(name="Biochemistry")
-        db.add_all([admin, receptionist, patient, category])
+        db.add_all([admin, receptionist, patient])
         db.commit()
         db.refresh(admin)
         db.refresh(receptionist)
         db.refresh(patient)
-        db.refresh(category)
 
-        test = TestMaster(
-            category_id=category.id,
-            test_code="LFT",
+        test = TestCase(
+            code="LFT",
             name="Liver Function Test",
             price=Decimal("1000.00"),
             is_active=True,

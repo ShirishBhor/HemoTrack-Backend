@@ -9,10 +9,12 @@ from app.models import (  # noqa: F401, E402
     Expense,
     Patient,
     Payment,
+    ParameterReferenceRange,
     Refund,
-    TestCategory,
-    TestMaster,
+    TestCase,
+    TestParameter,
     User,
+    TestCategory,
 )
 
 __all__ = [
@@ -20,13 +22,15 @@ __all__ = [
     "User",
     "Doctor",
     "Patient",
-    "TestCategory",
-    "TestMaster",
+    "TestCase",
+    "TestParameter",
+    "ParameterReferenceRange",
     "Bill",
     "BillItem",
     "Payment",
     "Expense",
     "Refund",
+    "TestCategory",
 ]
 
 

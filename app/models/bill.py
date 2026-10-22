@@ -83,7 +83,7 @@ class BillItem(Base):
     )
     test_id: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("test_master.id", ondelete="SET NULL"),
+        ForeignKey("test_cases.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -98,4 +98,4 @@ class BillItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     bill = relationship("Bill", back_populates="items")
-    test = relationship("TestMaster", back_populates="bill_items")
+    test = relationship("TestCase", back_populates="bill_items")
