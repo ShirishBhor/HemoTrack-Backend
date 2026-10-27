@@ -65,3 +65,26 @@ class AccountDateWiseSummary(BaseModel):
 
     net_cash_flow: Decimal
     active_period_dues: Decimal
+
+
+class ReferralEntitySummary(BaseModel):
+    id: int
+    name: str
+    phone: str | None = None
+    commission_percent: Decimal
+    patients_count: int
+    total_bills: int
+    total_billed: Decimal
+    total_paid: Decimal
+    commission_earned: Decimal
+
+
+class ReferralReportResponse(BaseModel):
+    from_date: date | None = None
+    to_date: date | None = None
+    generated_at: datetime
+    collection_centers: list[ReferralEntitySummary]
+    agents: list[ReferralEntitySummary]
+    total_centers_commission: Decimal
+    total_agents_commission: Decimal
+

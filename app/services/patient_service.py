@@ -5,6 +5,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.agent import Agent
+from app.models.collection_center import CollectionCenter
 from app.models.doctor import Doctor
 from app.models.patient import Patient, PatientType
 from app.schemas.patient import PatientCreate, PatientUpdate
@@ -55,7 +57,11 @@ def generate_uhid(db: Session) -> str:
 def get_patient(db: Session, patient_id: int) -> Patient | None:
     return db.scalar(
         select(Patient)
-        .options(joinedload(Patient.referred_by_doctor))
+        .options(
+            joinedload(Patient.referred_by_doctor),
+            joinedload(Patient.collection_center),
+            joinedload(Patient.agent),
+        )
         .where(Patient.id == patient_id)
     )
 
@@ -63,7 +69,11 @@ def get_patient(db: Session, patient_id: int) -> Patient | None:
 def get_patient_by_uhid(db: Session, uhid: str) -> Patient | None:
     return db.scalar(
         select(Patient)
-        .options(joinedload(Patient.referred_by_doctor))
+        .options(
+            joinedload(Patient.referred_by_doctor),
+            joinedload(Patient.collection_center),
+            joinedload(Patient.agent),
+        )
         .where(Patient.uhid == uhid)
     )
 
@@ -71,7 +81,11 @@ def get_patient_by_uhid(db: Session, uhid: str) -> Patient | None:
 def get_patient_by_barcode(db: Session, barcode: str) -> Patient | None:
     return db.scalar(
         select(Patient)
-        .options(joinedload(Patient.referred_by_doctor))
+        .options(
+            joinedload(Patient.referred_by_doctor),
+            joinedload(Patient.collection_center),
+            joinedload(Patient.agent),
+        )
         .where(Patient.sample_barcode == barcode)
     )
 
@@ -94,6 +108,28 @@ def _validate_doctor_ref(db: Session, doctor_id: int | None) -> None:
         )
 
 
+def _validate_collection_center_ref(db: Session, collection_center_id: int | None) -> None:
+    if collection_center_id is None:
+        return
+    center = db.get(CollectionCenter, collection_center_id)
+    if center is None or not center.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Collection center not found or inactive",
+        )
+
+
+def _validate_agent_ref(db: Session, agent_id: int | None) -> None:
+    if agent_id is None:
+        return
+    agent = db.get(Agent, agent_id)
+    if agent is None or not agent.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Agent not found or inactive",
+        )
+
+
 def list_patients(
     db: Session,
     *,
@@ -102,10 +138,16 @@ def list_patients(
     search: str | None = None,
     patient_type: PatientType | None = None,
     doctor_id: int | None = None,
+    collection_center_id: int | None = None,
+    agent_id: int | None = None,
     collection_date: date | None = None,
     include_cancelled: bool = False,
 ) -> list[Patient]:
-    query = select(Patient).options(joinedload(Patient.referred_by_doctor))
+    query = select(Patient).options(
+        joinedload(Patient.referred_by_doctor),
+        joinedload(Patient.collection_center),
+        joinedload(Patient.agent),
+    )
     if not include_cancelled:
         query = query.where(Patient.is_cancelled.is_(False), Patient.is_active.is_(True))
     if search:
@@ -124,6 +166,10 @@ def list_patients(
         query = query.where(Patient.patient_type == patient_type)
     if doctor_id is not None:
         query = query.where(Patient.referred_by_doctor_id == doctor_id)
+    if collection_center_id is not None:
+        query = query.where(Patient.collection_center_id == collection_center_id)
+    if agent_id is not None:
+        query = query.where(Patient.agent_id == agent_id)
     if collection_date is not None:
         query = query.where(Patient.collection_date == collection_date)
     query = query.order_by(Patient.id.desc()).offset(skip).limit(limit)
@@ -132,6 +178,8 @@ def list_patients(
 
 def create_patient(db: Session, payload: PatientCreate, created_by: int | None) -> Patient:
     _validate_doctor_ref(db, payload.referred_by_doctor_id)
+    _validate_collection_center_ref(db, payload.collection_center_id)
+    _validate_agent_ref(db, payload.agent_id)
     data = payload.model_dump()
     if not data.get("uhid"):
         data["uhid"] = generate_uhid(db)
@@ -160,6 +208,10 @@ def update_patient(db: Session, patient: Patient, payload: PatientUpdate) -> Pat
     data = payload.model_dump(exclude_unset=True)
     if "referred_by_doctor_id" in data:
         _validate_doctor_ref(db, data["referred_by_doctor_id"])
+    if "collection_center_id" in data:
+        _validate_collection_center_ref(db, data["collection_center_id"])
+    if "agent_id" in data:
+        _validate_agent_ref(db, data["agent_id"])
     if "uhid" in data and data["uhid"] != patient.uhid:
         if data["uhid"]:
             existing = get_patient_by_uhid(db, data["uhid"])

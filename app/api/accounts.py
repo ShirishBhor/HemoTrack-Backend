@@ -9,6 +9,7 @@ from app.schemas.accounts import (
     AccountDateWiseSummary,
     DailyCollectionReport,
     PendingDuesLedger,
+    ReferralReportResponse,
 )
 from app.services import accounts_service
 
@@ -74,6 +75,23 @@ def get_account_summary(
     _: AccountsAdminUser,
 ):
     return accounts_service.get_date_wise_summary(
+        db,
+        from_date=from_date,
+        to_date=to_date,
+    )
+
+
+@router.get("/referrals-summary", response_model=ReferralReportResponse)
+def get_referrals_summary(
+    db: DbSession,
+    _: AccountsViewUser,
+    from_date: date | None = Query(default=None, description="Start date for referral business report"),
+    to_date: date | None = Query(default=None, description="End date for referral business report"),
+):
+    """
+    Get business metrics and earned commission breakdown for Collection Centers and Agents.
+    """
+    return accounts_service.get_referrals_summary(
         db,
         from_date=from_date,
         to_date=to_date,

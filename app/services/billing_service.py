@@ -365,6 +365,16 @@ def get_printable_receipt(db: Session, bill_id: int) -> dict:
         "phone": patient.phone,
         "email": patient.email,
         "address": patient.address,
+        "collection_center_name": (
+            patient.collection_center.name
+            if patient.collection_center
+            else None
+        ),
+        "agent_name": (
+            patient.agent.name
+            if patient.agent
+            else None
+        ),
     }
 
     # Doctor metadata

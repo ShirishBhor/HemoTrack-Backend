@@ -1,4 +1,6 @@
+from app.models.agent import Agent
 from app.models.bill import Bill, BillItem, BillStatus, DiscountType
+from app.models.collection_center import CollectionCenter
 from app.models.doctor import Doctor
 from app.models.expense import Expense, ExpenseCategory, ExpensePaymentMode
 from app.models.patient import Gender, Patient, PatientType
@@ -11,6 +13,8 @@ from app.models.parameter_reference_range import ParameterReferenceRange
 from app.models.test_category import TestCategory
 
 __all__ = [
+    "Agent",
+    "CollectionCenter",
     "User",
     "UserRole",
     "Doctor",

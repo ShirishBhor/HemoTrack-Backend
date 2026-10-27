@@ -20,6 +20,8 @@ class ReceiptPatientInfo(BaseModel):
     phone: str | None = None
     email: str | None = None
     address: str | None = None
+    collection_center_name: str | None = None
+    agent_name: str | None = None
 
 
 class ReceiptDoctorInfo(BaseModel):

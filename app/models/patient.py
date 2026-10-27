@@ -1,7 +1,7 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -85,6 +85,21 @@ class Patient(Base):
         nullable=True,
         index=True,
     )
+    # Structured FK references
+    collection_center_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("collection_centers.id"),
+        nullable=True,
+        index=True,
+    )
+
+    agent_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("agents.id"),
+        nullable=True,
+        index=True,
+    )
+    # Legacy text field for backward compatibility
     agent_or_collection_centre: Mapped[str | None] = mapped_column(String(255), nullable=True)
     remarks: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_cancelled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -104,4 +119,14 @@ class Patient(Base):
 
     referred_by_doctor = relationship("Doctor", back_populates="patients")
     created_by_user = relationship("User", back_populates="patients_created")
+    collection_center = relationship(
+        "CollectionCenter",
+        back_populates="patients",
+        foreign_keys=[collection_center_id],
+    )
+    agent = relationship(
+        "Agent",
+        back_populates="patients",
+        foreign_keys=[agent_id],
+    )
 

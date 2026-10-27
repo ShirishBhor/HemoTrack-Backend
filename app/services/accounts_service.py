@@ -4,7 +4,9 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.agent import Agent
 from app.models.bill import Bill, BillStatus
+from app.models.collection_center import CollectionCenter
 from app.models.doctor import Doctor
 from app.models.expense import Expense
 from app.models.patient import Patient
@@ -16,6 +18,8 @@ from app.schemas.accounts import (
     ModeCollectionSummary,
     PendingDueItem,
     PendingDuesLedger,
+    ReferralEntitySummary,
+    ReferralReportResponse,
 )
 
 
@@ -204,4 +208,137 @@ def get_date_wise_summary(
         total_refunds_issued=refunds_sum,
         net_cash_flow=net_cash_flow,
         active_period_dues=period_dues,
+    )
+
+
+def get_referrals_summary(
+    db: Session,
+    *,
+    from_date: date | None = None,
+    to_date: date | None = None,
+) -> ReferralReportResponse:
+    """Generate business breakdown and commissions for Collection Centers and Agents."""
+
+    # 1. Collection Centers
+    centers = db.scalars(select(CollectionCenter).order_by(CollectionCenter.name)).all()
+    center_summaries: list[ReferralEntitySummary] = []
+    total_centers_comm = Decimal("0.00")
+
+    for center in centers:
+        pat_count = (
+            db.scalar(
+                select(func.count(Patient.id)).where(
+                    Patient.collection_center_id == center.id
+                )
+            )
+            or 0
+        )
+
+        bill_query = (
+            select(
+                func.count(Bill.id).label("cnt"),
+                func.coalesce(func.sum(Bill.payable_amount), Decimal("0.00")).label("total_billed"),
+                func.coalesce(func.sum(Bill.paid_amount), Decimal("0.00")).label("total_paid"),
+            )
+            .join(Patient, Bill.patient_id == Patient.id)
+            .where(
+                Patient.collection_center_id == center.id,
+                Bill.is_cancelled.is_(False),
+            )
+        )
+        if from_date:
+            bill_query = bill_query.where(func.date(Bill.created_at) >= from_date)
+        if to_date:
+            bill_query = bill_query.where(func.date(Bill.created_at) <= to_date)
+
+        b_row = db.execute(bill_query).one()
+        billed_val = Decimal(str(b_row.total_billed)).quantize(Decimal("0.01"))
+        paid_val = Decimal(str(b_row.total_paid)).quantize(Decimal("0.01"))
+        comm_pct = (
+            Decimal(str(center.commission_percent))
+            if center.commission_percent is not None
+            else Decimal("0.00")
+        )
+        comm_earned = (billed_val * comm_pct / Decimal("100.00")).quantize(Decimal("0.01"))
+        total_centers_comm += comm_earned
+
+        center_summaries.append(
+            ReferralEntitySummary(
+                id=center.id,
+                name=center.name,
+                phone=center.phone,
+                commission_percent=comm_pct,
+                patients_count=pat_count,
+                total_bills=int(b_row.cnt),
+                total_billed=billed_val,
+                total_paid=paid_val,
+                commission_earned=comm_earned,
+            )
+        )
+
+    # 2. Agents
+    agents = db.scalars(select(Agent).order_by(Agent.name)).all()
+    agent_summaries: list[ReferralEntitySummary] = []
+    total_agents_comm = Decimal("0.00")
+
+    for agent in agents:
+        pat_count = (
+            db.scalar(
+                select(func.count(Patient.id)).where(
+                    Patient.agent_id == agent.id
+                )
+            )
+            or 0
+        )
+
+        bill_query = (
+            select(
+                func.count(Bill.id).label("cnt"),
+                func.coalesce(func.sum(Bill.payable_amount), Decimal("0.00")).label("total_billed"),
+                func.coalesce(func.sum(Bill.paid_amount), Decimal("0.00")).label("total_paid"),
+            )
+            .join(Patient, Bill.patient_id == Patient.id)
+            .where(
+                Patient.agent_id == agent.id,
+                Bill.is_cancelled.is_(False),
+            )
+        )
+        if from_date:
+            bill_query = bill_query.where(func.date(Bill.created_at) >= from_date)
+        if to_date:
+            bill_query = bill_query.where(func.date(Bill.created_at) <= to_date)
+
+        b_row = db.execute(bill_query).one()
+        billed_val = Decimal(str(b_row.total_billed)).quantize(Decimal("0.01"))
+        paid_val = Decimal(str(b_row.total_paid)).quantize(Decimal("0.01"))
+        comm_pct = (
+            Decimal(str(agent.commission_percent))
+            if agent.commission_percent is not None
+            else Decimal("0.00")
+        )
+        comm_earned = (billed_val * comm_pct / Decimal("100.00")).quantize(Decimal("0.01"))
+        total_agents_comm += comm_earned
+
+        agent_summaries.append(
+            ReferralEntitySummary(
+                id=agent.id,
+                name=agent.name,
+                phone=agent.phone,
+                commission_percent=comm_pct,
+                patients_count=pat_count,
+                total_bills=int(b_row.cnt),
+                total_billed=billed_val,
+                total_paid=paid_val,
+                commission_earned=comm_earned,
+            )
+        )
+
+    return ReferralReportResponse(
+        from_date=from_date,
+        to_date=to_date,
+        generated_at=datetime.now(),
+        collection_centers=center_summaries,
+        agents=agent_summaries,
+        total_centers_commission=total_centers_comm.quantize(Decimal("0.01")),
+        total_agents_commission=total_agents_comm.quantize(Decimal("0.01")),
     )

@@ -32,6 +32,8 @@ def list_patients(
     search: str | None = Query(default=None, max_length=255),
     patient_type: PatientType | None = None,
     doctor_id: int | None = None,
+    collection_center_id: int | None = Query(default=None, description="Filter by collection center ID"),
+    agent_id: int | None = Query(default=None, description="Filter by agent ID"),
     collection_date: date | None = None,
     include_cancelled: bool = Query(default=False),
 ):
@@ -42,6 +44,8 @@ def list_patients(
         search=search,
         patient_type=patient_type,
         doctor_id=doctor_id,
+        collection_center_id=collection_center_id,
+        agent_id=agent_id,
         collection_date=collection_date,
         include_cancelled=include_cancelled,
     )

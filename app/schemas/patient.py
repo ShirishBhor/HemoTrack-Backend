@@ -3,6 +3,8 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models.patient import BloodGroup, Gender, MaritalStatus, PatientType
+from app.schemas.agent import AgentRead
+from app.schemas.collection_center import CollectionCenterRead
 from app.schemas.doctor import DoctorRead
 
 
@@ -30,6 +32,8 @@ class PatientBase(BaseModel):
     reporting_date: date | None = None
     sample_barcode: str | None = Field(default=None, max_length=100)
     referred_by_doctor_id: int | None = None
+    collection_center_id: int | None = None
+    agent_id: int | None = None
     agent_or_collection_centre: str | None = Field(default=None, max_length=255)
     remarks: str | None = None
 
@@ -83,6 +87,8 @@ class PatientUpdate(BaseModel):
     reporting_date: date | None = None
     sample_barcode: str | None = Field(default=None, max_length=100)
     referred_by_doctor_id: int | None = None
+    collection_center_id: int | None = None
+    agent_id: int | None = None
     agent_or_collection_centre: str | None = Field(default=None, max_length=255)
     remarks: str | None = None
     is_active: bool | None = None
@@ -120,4 +126,6 @@ class PatientRead(PatientBase):
     created_at: datetime
     updated_at: datetime
     referred_by_doctor: DoctorRead | None = None
+    collection_center: CollectionCenterRead | None = None
+    agent: AgentRead | None = None
 
