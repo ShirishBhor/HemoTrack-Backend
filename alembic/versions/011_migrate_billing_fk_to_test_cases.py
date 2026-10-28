@@ -1,6 +1,6 @@
 """migrate bill_items FK from test_master to test_cases, drop test_master and test_categories
 
-Revision ID: 007_migrate_billing_fk_to_test_cases
+Revision ID: 007_migrate_billing_fk
 Revises: 006_expenses_refunds
 Create Date: 2026-10-22
 
@@ -16,8 +16,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "007_migrate_billing_fk_to_test_cases"
-down_revision: Union[str, Sequence[str], None] = ("b7a89e12c345", "006_accounts_and_refunds")
+revision: str = "011_migrate_billing_fk"
+down_revision: Union[str, None] = "010_reference_ranges"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

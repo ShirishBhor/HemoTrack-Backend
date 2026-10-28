@@ -1,7 +1,7 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 from app.core.config import settings
 from app.db import Base
@@ -38,6 +38,15 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        if connection.dialect.name == "mysql":
+            try:
+                connection.execute(
+                    text("ALTER TABLE alembic_version MODIFY COLUMN version_num VARCHAR(255)")
+                )
+                connection.commit()
+            except Exception:
+                pass
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

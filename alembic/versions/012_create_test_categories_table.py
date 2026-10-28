@@ -1,7 +1,7 @@
 """create test categories table
 
 Revision ID: 699f6683ca7b
-Revises: 007_migrate_billing_fk_to_test_cases
+Revises: 007_migrate_billing_fk
 Create Date: 2026-10-22 12:28:15.319906
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '699f6683ca7b'
-down_revision: Union[str, None] = '007_migrate_billing_fk_to_test_cases'
+revision: str = '012_test_categories'
+down_revision: Union[str, None] = '011_migrate_billing_fk'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
