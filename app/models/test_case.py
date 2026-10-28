@@ -18,7 +18,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 if TYPE_CHECKING:
     from app.models.test_parameter import TestParameter
     from app.models.bill import BillItem
-    from app.models.test_category import TestCategory
+    from app.models.department import Department
 
 from app.db.base import Base
 
@@ -66,9 +66,9 @@ class TestCase(Base):
         nullable=True,
     )
 
-    category_id: Mapped[int | None] = mapped_column(
+    department_id: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("test_categories.id", ondelete="SET NULL"),
+        ForeignKey("departments.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -105,7 +105,19 @@ class TestCase(Base):
         back_populates="test",
     )
 
-    category: Mapped["TestCategory | None"] = relationship(
-        "TestCategory",
+    department: Mapped["Department | None"] = relationship(
+        "Department",
         back_populates="test_cases",
     )
+
+    @property
+    def category_id(self) -> int | None:
+        return self.department_id
+
+    @category_id.setter
+    def category_id(self, value: int | None) -> None:
+        self.department_id = value
+
+    @property
+    def category(self) -> "Department | None":
+        return self.department

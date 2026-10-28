@@ -14,6 +14,7 @@ from app.models import (  # noqa: F401, E402
     TestCase,
     TestParameter,
     User,
+    Department,
     TestCategory,
 )
 
@@ -30,8 +31,6 @@ __all__ = [
     "Payment",
     "Expense",
     "Refund",
+    "Department",
     "TestCategory",
 ]
-
-
-

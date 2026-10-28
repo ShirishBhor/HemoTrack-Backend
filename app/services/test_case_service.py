@@ -23,7 +23,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.test_case import TestCase
-from app.models.test_category import TestCategory
+from app.models.department import Department
 from app.schemas.test_case import TestCaseCreate, TestCaseUpdate
 
 logger = logging.getLogger(__name__)
@@ -72,6 +72,7 @@ def list_test_cases(
     limit: int = 50,
     search: str | None = None,
     active_only: bool = True,
+    department_id: int | None = None,
     category_id: int | None = None,
 ) -> list[TestCase]:
     """
@@ -80,7 +81,7 @@ def list_test_cases(
     - Pagination
     - Search by name/code
     - Active/inactive filtering
-    - Category filtering
+    - Department filtering
     """
 
     query = select(TestCase)
@@ -105,9 +106,10 @@ def list_test_cases(
                 )
             )
 
-    # Filter by category
-    if category_id is not None:
-        query = query.where(TestCase.category_id == category_id)
+    # Filter by department / category
+    effective_dept_id = department_id if department_id is not None else category_id
+    if effective_dept_id is not None:
+        query = query.where(TestCase.department_id == effective_dept_id)
 
     query = (
         query
@@ -121,31 +123,34 @@ def list_test_cases(
     )
 
 
-def _resolve_category(
+def _resolve_department(
     db: Session,
-    category_id: int | None,
+    department_id: int | None,
 ) -> None:
     """
-    Validate that the given category_id references an active TestCategory.
-    Raises HTTP 422 if the category is not found or inactive.
+    Validate that the given department_id references an active Department.
+    Raises HTTP 422 if the department is not found or inactive.
     """
-    if category_id is None:
+    if department_id is None:
         return
 
-    category = db.get(TestCategory, category_id)
+    department = db.get(Department, department_id)
 
-    if category is None:
+    if department is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Test category with id {category_id} does not exist",
+            detail=f"Department with id {department_id} does not exist",
         )
 
-    if not category.is_active:
+    if not department.is_active:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Test category '{category.name}' is inactive. "
-                   "Please use an active category.",
+            detail=f"Department '{department.name}' is inactive. "
+                   "Please use an active department.",
         )
+
+
+_resolve_category = _resolve_department
 
 
 def create_test_case(
@@ -155,7 +160,7 @@ def create_test_case(
     """
     Create a new Test Case.
     """
-    _resolve_category(db, payload.category_id)
+    _resolve_department(db, payload.department_id)
 
     test_case = TestCase(
         **payload.model_dump()
@@ -210,9 +215,11 @@ def update_test_case(
             detail="At least one field is required for update",
         )
 
-    # Validate category_id if it was supplied in the payload
-    if "category_id" in data:
-        _resolve_category(db, data["category_id"])
+    # Validate department_id / category_id if it was supplied in the payload
+    if "department_id" in data:
+        _resolve_department(db, data["department_id"])
+    elif "category_id" in data:
+        _resolve_department(db, data["category_id"])
 
     # Update supplied fields
     for field, value in data.items():

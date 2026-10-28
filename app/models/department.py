@@ -1,13 +1,11 @@
-
 """
 Author: Nikhil Yuvraj Mole
 Date: 2026-10-22
 
 Description:
-Stores master information about laboratory test categories.
-Categories are maintained separately from individual test cases.
+Stores master information about laboratory departments.
+Departments are maintained separately from individual test cases.
 """
-
 
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -21,8 +19,8 @@ if TYPE_CHECKING:
 from app.db.base import Base
 
 
-class TestCategory(Base):
-    __tablename__ = "test_categories"
+class Department(Base):
+    __tablename__ = "departments"
 
     id: Mapped[int] = mapped_column(
         Integer,
@@ -71,5 +69,9 @@ class TestCategory(Base):
 
     test_cases: Mapped[list["TestCase"]] = relationship(
         "TestCase",
-        back_populates="category",
+        back_populates="department",
     )
+
+
+# Backward-compatible alias
+TestCategory = Department

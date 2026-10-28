@@ -1,11 +1,10 @@
-
 """
 Author: Nikhil Yuvraj Mole
 Date: 2026-10-22
 
 Description:
 Contains database operations and business logic
-for Test Category management.
+for Department management.
 """
 
 import logging
@@ -15,54 +14,54 @@ from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models.test_category import TestCategory
-from app.schemas.test_category import (
-    TestCategoryCreate,
-    TestCategoryUpdate,
+from app.models.department import Department
+from app.schemas.department import (
+    DepartmentCreate,
+    DepartmentUpdate,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def get_category_or_404(
+def get_department_or_404(
     db: Session,
-    category_id: int,
-) -> TestCategory:
-    category = db.get(TestCategory, category_id)
+    department_id: int,
+) -> Department:
+    department = db.get(Department, department_id)
 
-    if category is None:
+    if department is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Test category not found.",
+            detail="Department not found.",
         )
 
-    return category
+    return department
 
 
-def list_categories(
+def list_departments(
     db: Session,
     *,
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
     active_only: bool = True,
-) -> list[TestCategory]:
-    query = select(TestCategory)
+) -> list[Department]:
+    query = select(Department)
 
     if active_only:
-        query = query.where(TestCategory.is_active.is_(True))
+        query = query.where(Department.is_active.is_(True))
 
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         query = query.where(
             or_(
-                TestCategory.name.ilike(pattern),
-                TestCategory.code.ilike(pattern),
+                Department.name.ilike(pattern),
+                Department.code.ilike(pattern),
             )
         )
 
     query = (
-        query.order_by(TestCategory.name.asc())
+        query.order_by(Department.name.asc())
         .offset(skip)
         .limit(limit)
     )
@@ -70,44 +69,44 @@ def list_categories(
     return list(db.scalars(query).all())
 
 
-def create_category(
+def create_department(
     db: Session,
-    payload: TestCategoryCreate,
-) -> TestCategory:
-    category = TestCategory(
+    payload: DepartmentCreate,
+) -> Department:
+    department = Department(
         name=payload.name,
         code=payload.code,
         description=payload.description,
     )
 
     try:
-        db.add(category)
+        db.add(department)
         db.commit()
-        db.refresh(category)
-        return category
+        db.refresh(department)
+        return department
 
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A category with this name or code already exists.",
+            detail="A department with this name or code already exists.",
         ) from exc
 
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Failed to create test category")
+        logger.exception("Failed to create department")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create test category.",
+            detail="Failed to create department.",
         ) from exc
 
 
-def update_category(
+def update_department(
     db: Session,
-    category_id: int,
-    payload: TestCategoryUpdate,
-) -> TestCategory:
-    category = get_category_or_404(db, category_id)
+    department_id: int,
+    payload: DepartmentUpdate,
+) -> Department:
+    department = get_department_or_404(db, department_id)
 
     changes = payload.model_dump(exclude_unset=True)
 
@@ -118,80 +117,89 @@ def update_category(
         )
 
     for field, value in changes.items():
-        setattr(category, field, value)
+        setattr(department, field, value)
 
     try:
         db.commit()
-        db.refresh(category)
-        return category
+        db.refresh(department)
+        return department
 
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A category with this name or code already exists.",
+            detail="A department with this name or code already exists.",
         ) from exc
 
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Failed to update test category")
+        logger.exception("Failed to update department")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update test category.",
+            detail="Failed to update department.",
         ) from exc
 
 
-def deactivate_category(
+def deactivate_department(
     db: Session,
-    category_id: int,
-) -> TestCategory:
-    category = get_category_or_404(db, category_id)
+    department_id: int,
+) -> Department:
+    department = get_department_or_404(db, department_id)
 
-    if not category.is_active:
+    if not department.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Test category is already inactive.",
+            detail="Department is already inactive.",
         )
 
-    category.is_active = False
+    department.is_active = False
 
     try:
         db.commit()
-        db.refresh(category)
-        return category
+        db.refresh(department)
+        return department
 
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Failed to deactivate test category")
+        logger.exception("Failed to deactivate department")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to deactivate test category.",
+            detail="Failed to deactivate department.",
         ) from exc
 
 
-def reactivate_category(
+def reactivate_department(
     db: Session,
-    category_id: int,
-) -> TestCategory:
-    category = get_category_or_404(db, category_id)
+    department_id: int,
+) -> Department:
+    department = get_department_or_404(db, department_id)
 
-    if category.is_active:
+    if department.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Test category is already active.",
+            detail="Department is already active.",
         )
 
-    category.is_active = True
+    department.is_active = True
 
     try:
         db.commit()
-        db.refresh(category)
-        return category
+        db.refresh(department)
+        return department
 
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.exception("Failed to reactivate test category")
+        logger.exception("Failed to reactivate department")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to reactivate test category.",
+            detail="Failed to reactivate department.",
         ) from exc
+
+
+# Backward-compatible function aliases
+get_category_or_404 = get_department_or_404
+list_categories = list_departments
+create_category = create_department
+update_category = update_department
+deactivate_category = deactivate_department
+reactivate_category = reactivate_department

@@ -13,9 +13,15 @@ import re
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
 
-from app.schemas.test_category import TestCategoryRead
+from app.schemas.department import DepartmentRead, TestCategoryRead
 from app.schemas.test_parameter import TestParameterRead
 
 
@@ -53,9 +59,10 @@ class TestCaseBase(BaseModel):
         description="Turnaround time for the test",
     )
 
-    category_id: int | None = Field(
+    department_id: int | None = Field(
         default=None,
-        description="ID of the Test Category this test belongs to",
+        validation_alias=AliasChoices("department_id", "category_id"),
+        description="ID of the Department this test belongs to",
     )
 
     @field_validator("name")
@@ -137,9 +144,10 @@ class TestCaseUpdate(BaseModel):
 
     is_active: bool | None = None
 
-    category_id: int | None = Field(
+    department_id: int | None = Field(
         default=None,
-        description="ID of the Test Category this test belongs to",
+        validation_alias=AliasChoices("department_id", "category_id"),
+        description="ID of the Department this test belongs to",
     )
 
     @field_validator("name")
@@ -189,12 +197,13 @@ class TestCaseUpdate(BaseModel):
 
 
 class TestCaseRead(TestCaseBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    department: DepartmentRead | None = None
     category: TestCategoryRead | None = None
 
 

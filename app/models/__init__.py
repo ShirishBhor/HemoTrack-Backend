@@ -10,7 +10,7 @@ from app.models.user import User, UserRole
 from app.models.test_case import TestCase
 from app.models.test_parameter import TestParameter
 from app.models.parameter_reference_range import ParameterReferenceRange
-from app.models.test_category import TestCategory
+from app.models.department import Department, TestCategory
 
 __all__ = [
     "Agent",
@@ -35,8 +35,6 @@ __all__ = [
     "ExpensePaymentMode",
     "Refund",
     "RefundMode",
+    "Department",
     "TestCategory",
 ]
-
-
-

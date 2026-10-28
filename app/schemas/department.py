@@ -1,10 +1,9 @@
-
 """
 Author: Nikhil Yuvraj Mole
 Date: 2026-10-22
 
 Description:
-Defines validation schemas for Test Category APIs.
+Defines validation schemas for Department APIs.
 """
 
 import re
@@ -19,7 +18,7 @@ from pydantic import (
 )
 
 
-class TestCategoryBase(BaseModel):
+class DepartmentBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=150)
     code: str = Field(..., min_length=1, max_length=50)
     description: str | None = None
@@ -30,7 +29,7 @@ class TestCategoryBase(BaseModel):
         value = value.strip()
 
         if not value:
-            raise ValueError("Category name cannot be empty.")
+            raise ValueError("Department name cannot be empty.")
 
         return value
 
@@ -41,7 +40,7 @@ class TestCategoryBase(BaseModel):
 
         if not re.fullmatch(r"[A-Z0-9_-]+", value):
             raise ValueError(
-                "Category code can contain only letters, "
+                "Department code can contain only letters, "
                 "numbers, hyphens, and underscores."
             )
 
@@ -57,11 +56,11 @@ class TestCategoryBase(BaseModel):
         return value or None
 
 
-class TestCategoryCreate(TestCategoryBase):
+class DepartmentCreate(DepartmentBase):
     pass
 
 
-class TestCategoryUpdate(BaseModel):
+class DepartmentUpdate(BaseModel):
     name: str | None = Field(
         default=None,
         min_length=1,
@@ -93,7 +92,7 @@ class TestCategoryUpdate(BaseModel):
 
         value = value.strip()
         if not value:
-            raise ValueError("Category name cannot be empty.")
+            raise ValueError("Department name cannot be empty.")
 
         return value
 
@@ -107,7 +106,7 @@ class TestCategoryUpdate(BaseModel):
 
         if not re.fullmatch(r"[A-Z0-9_-]+", value):
             raise ValueError(
-                "Category code can contain only letters, "
+                "Department code can contain only letters, "
                 "numbers, hyphens, and underscores."
             )
 
@@ -123,10 +122,17 @@ class TestCategoryUpdate(BaseModel):
         return value or None
 
 
-class TestCategoryRead(TestCategoryBase):
+class DepartmentRead(DepartmentBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+# Backward-compatible aliases
+TestCategoryBase = DepartmentBase
+TestCategoryCreate = DepartmentCreate
+TestCategoryUpdate = DepartmentUpdate
+TestCategoryRead = DepartmentRead

@@ -33,6 +33,16 @@ from app.schemas.receipt import (
 )
 
 
+from app.schemas.department import (
+    DepartmentBase,
+    DepartmentCreate,
+    DepartmentRead,
+    DepartmentUpdate,
+    TestCategoryBase,
+    TestCategoryCreate,
+    TestCategoryRead,
+    TestCategoryUpdate,
+)
 from app.schemas.test_case import (
     TestCaseCreate,
     TestCaseRead,
@@ -131,6 +141,14 @@ __all__ = [
     "PendingDueItem",
     "PendingDuesLedger",
     "AccountDateWiseSummary",
+    "DepartmentBase",
+    "DepartmentCreate",
+    "DepartmentRead",
+    "DepartmentUpdate",
+    "TestCategoryBase",
+    "TestCategoryCreate",
+    "TestCategoryRead",
+    "TestCategoryUpdate",
 ]
 
 
