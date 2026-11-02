@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
-        "https://testing.hemotrack.co.in",
+        "https://hemotrackbtms.netlify.app",
     ]
 
 
