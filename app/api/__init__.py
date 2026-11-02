@@ -8,6 +8,7 @@ from app.api import (
     departments,
     doctors,
     expenses,
+    packages,
     patients,
     payments,
     refunds,
@@ -28,6 +29,7 @@ api_router.include_router(collection_centers.router)
 api_router.include_router(agents.router)
 api_router.include_router(patients.router)
 api_router.include_router(departments.router)
+api_router.include_router(packages.router)
 api_router.include_router(test_cases.router)
 api_router.include_router(test_parameters.router)
 api_router.include_router(bills.router)

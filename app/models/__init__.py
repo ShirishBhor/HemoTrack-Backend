@@ -11,6 +11,7 @@ from app.models.test_case import TestCase
 from app.models.test_parameter import TestParameter
 from app.models.parameter_reference_range import ParameterReferenceRange
 from app.models.department import Department, TestCategory
+from app.models.package import Package, PackageTestCase
 
 __all__ = [
     "Agent",
@@ -24,6 +25,8 @@ __all__ = [
     "TestCase",
     "TestParameter",
     "ParameterReferenceRange",
+    "Package",
+    "PackageTestCase",
     "Bill",
     "BillItem",
     "BillStatus",
