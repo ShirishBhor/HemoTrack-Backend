@@ -18,5 +18,11 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "Admin@123"
     ADMIN_FULL_NAME: str = "System Admin"
 
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://hemotrackbtms.netlify.app",
+    ]
+
 
 settings = Settings()
