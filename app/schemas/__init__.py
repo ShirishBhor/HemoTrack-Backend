@@ -38,16 +38,20 @@ from app.schemas.department import (
     DepartmentCreate,
     DepartmentRead,
     DepartmentUpdate,
-    TestCategoryBase,
-    TestCategoryCreate,
-    TestCategoryRead,
-    TestCategoryUpdate,
 )
 from app.schemas.test_case import (
     TestCaseCreate,
     TestCaseRead,
     TestCaseUpdate,
     TestCaseWithParametersRead,
+)
+from app.schemas.package import (
+    PackageBase,
+    PackageCreate,
+    PackageRead,
+    PackageTestCaseRead,
+    PackageUpdate,
+    PackageWithTestsRead,
 )
 from app.schemas.test_parameter import (
     CopyParametersRequest,
@@ -109,6 +113,12 @@ __all__ = [
     "TestCaseRead",
     "TestCaseUpdate",
     "TestCaseWithParametersRead",
+    "PackageBase",
+    "PackageCreate",
+    "PackageUpdate",
+    "PackageRead",
+    "PackageWithTestsRead",
+    "PackageTestCaseRead",
     "TestParameterCreate",
     "TestParameterRead",
     "TestParameterUpdate",
@@ -145,12 +155,4 @@ __all__ = [
     "DepartmentCreate",
     "DepartmentRead",
     "DepartmentUpdate",
-    "TestCategoryBase",
-    "TestCategoryCreate",
-    "TestCategoryRead",
-    "TestCategoryUpdate",
 ]
-
-
-
-

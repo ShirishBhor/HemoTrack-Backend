@@ -164,14 +164,3 @@ def reactivate_department(
         db,
         department_id,
     )
-
-
-# Backward-compatible aliases
-TestCategoryWriteUser = DepartmentWriteUser
-list_test_categories = list_departments
-create_test_category = create_department
-search_test_categories = search_departments
-get_test_category = get_department
-update_test_category = update_department
-deactivate_test_category = deactivate_department
-reactivate_test_category = reactivate_department

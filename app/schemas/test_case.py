@@ -14,14 +14,13 @@ from datetime import datetime
 from decimal import Decimal
 
 from pydantic import (
-    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
     field_validator,
 )
 
-from app.schemas.department import DepartmentRead, TestCategoryRead
+from app.schemas.department import DepartmentRead
 from app.schemas.test_parameter import TestParameterRead
 
 
@@ -61,7 +60,6 @@ class TestCaseBase(BaseModel):
 
     department_id: int | None = Field(
         default=None,
-        validation_alias=AliasChoices("department_id", "category_id"),
         description="ID of the Department this test belongs to",
     )
 
@@ -146,7 +144,6 @@ class TestCaseUpdate(BaseModel):
 
     department_id: int | None = Field(
         default=None,
-        validation_alias=AliasChoices("department_id", "category_id"),
         description="ID of the Department this test belongs to",
     )
 
@@ -204,7 +201,6 @@ class TestCaseRead(TestCaseBase):
     created_at: datetime
     updated_at: datetime
     department: DepartmentRead | None = None
-    category: TestCategoryRead | None = None
 
 
 class TestCaseWithParametersRead(TestCaseRead):

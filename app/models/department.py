@@ -71,7 +71,3 @@ class Department(Base):
         "TestCase",
         back_populates="department",
     )
-
-
-# Backward-compatible alias
-TestCategory = Department

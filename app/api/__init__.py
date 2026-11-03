@@ -15,10 +15,8 @@ from app.api import (
     test_cases,
     test_parameters,
     users,
+    packages
 )
-
-# Backward compatibility alias
-test_categories = departments
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -29,6 +27,7 @@ api_router.include_router(collection_centers.router)
 api_router.include_router(agents.router)
 api_router.include_router(patients.router)
 api_router.include_router(departments.router)
+api_router.include_router(packages.router)
 api_router.include_router(test_cases.router)
 api_router.include_router(test_parameters.router)
 api_router.include_router(bills.router)

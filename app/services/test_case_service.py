@@ -73,7 +73,6 @@ def list_test_cases(
     search: str | None = None,
     active_only: bool = True,
     department_id: int | None = None,
-    category_id: int | None = None,
 ) -> list[TestCase]:
     """
     Return Test Cases with:
@@ -106,10 +105,9 @@ def list_test_cases(
                 )
             )
 
-    # Filter by department / category
-    effective_dept_id = department_id if department_id is not None else category_id
-    if effective_dept_id is not None:
-        query = query.where(TestCase.department_id == effective_dept_id)
+    # Filter by department
+    if department_id is not None:
+        query = query.where(TestCase.department_id == department_id)
 
     query = (
         query
@@ -149,8 +147,6 @@ def _resolve_department(
                    "Please use an active department.",
         )
 
-
-_resolve_category = _resolve_department
 
 
 def create_test_case(
@@ -215,11 +211,9 @@ def update_test_case(
             detail="At least one field is required for update",
         )
 
-    # Validate department_id / category_id if it was supplied in the payload
+    # Validate department_id if it was supplied in the payload
     if "department_id" in data:
         _resolve_department(db, data["department_id"])
-    elif "category_id" in data:
-        _resolve_department(db, data["category_id"])
 
     # Update supplied fields
     for field, value in data.items():
