@@ -98,11 +98,6 @@ def list_test_cases(
         gt=0,
         description="Filter by Department ID",
     ),
-    category_id: int | None = Query(
-        default=None,
-        gt=0,
-        description="Filter by Department ID (deprecated alias for department_id)",
-    ),
 ):
     """
     Get all laboratory Test Cases.
@@ -121,7 +116,6 @@ def list_test_cases(
         search=search,
         active_only=active_only,
         department_id=department_id,
-        category_id=category_id,
     )
 
 

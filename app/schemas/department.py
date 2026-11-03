@@ -129,10 +129,3 @@ class DepartmentRead(DepartmentBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-
-
-# Backward-compatible aliases
-TestCategoryBase = DepartmentBase
-TestCategoryCreate = DepartmentCreate
-TestCategoryUpdate = DepartmentUpdate
-TestCategoryRead = DepartmentRead

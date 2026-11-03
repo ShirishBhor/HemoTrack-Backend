@@ -12,14 +12,13 @@ from datetime import datetime
 from decimal import Decimal
 
 from pydantic import (
-    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
     field_validator,
 )
 
-from app.schemas.department import DepartmentRead, TestCategoryRead
+from app.schemas.department import DepartmentRead
 from app.schemas.test_case import TestCaseRead
 
 
@@ -70,7 +69,6 @@ class PackageBase(BaseModel):
 
     department_id: int | None = Field(
         default=None,
-        validation_alias=AliasChoices("department_id", "category_id"),
         description="Optional department ID the package belongs to",
     )
 
@@ -146,7 +144,6 @@ class PackageUpdate(BaseModel):
 
     department_id: int | None = Field(
         default=None,
-        validation_alias=AliasChoices("department_id", "category_id"),
     )
 
     is_active: bool | None = None
@@ -207,11 +204,9 @@ class PackageRead(PackageBase):
     created_at: datetime
     updated_at: datetime
     department: DepartmentRead | None = None
-    category: TestCategoryRead | None = None
     test_count: int = 0
 
 
 class PackageWithTestsRead(PackageRead):
     package_tests: list[PackageTestCaseRead] = []
     test_cases: list[TestCaseRead] = []
-

@@ -38,10 +38,6 @@ from app.schemas.department import (
     DepartmentCreate,
     DepartmentRead,
     DepartmentUpdate,
-    TestCategoryBase,
-    TestCategoryCreate,
-    TestCategoryRead,
-    TestCategoryUpdate,
 )
 from app.schemas.test_case import (
     TestCaseCreate,
@@ -159,8 +155,4 @@ __all__ = [
     "DepartmentCreate",
     "DepartmentRead",
     "DepartmentUpdate",
-    "TestCategoryBase",
-    "TestCategoryCreate",
-    "TestCategoryRead",
-    "TestCategoryUpdate",
 ]

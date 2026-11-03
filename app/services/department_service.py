@@ -194,12 +194,3 @@ def reactivate_department(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to reactivate department.",
         ) from exc
-
-
-# Backward-compatible function aliases
-get_category_or_404 = get_department_or_404
-list_categories = list_departments
-create_category = create_department
-update_category = update_department
-deactivate_category = deactivate_department
-reactivate_category = reactivate_department

@@ -109,15 +109,3 @@ class TestCase(Base):
         "Department",
         back_populates="test_cases",
     )
-
-    @property
-    def category_id(self) -> int | None:
-        return self.department_id
-
-    @category_id.setter
-    def category_id(self, value: int | None) -> None:
-        self.department_id = value
-
-    @property
-    def category(self) -> "Department | None":
-        return self.department

@@ -17,9 +17,6 @@ from app.api import (
     users,
 )
 
-# Backward compatibility alias
-test_categories = departments
-
 api_router = APIRouter(prefix="/api/v1")
 
 api_router.include_router(auth.router)

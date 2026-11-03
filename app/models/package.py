@@ -169,7 +169,3 @@ class Package(Base):
     @property
     def test_cases(self) -> list["TestCase"]:
         return [pt.test_case for pt in self.package_tests if pt.test_case is not None]
-
-    @property
-    def category(self) -> "Department | None":
-        return self.department
