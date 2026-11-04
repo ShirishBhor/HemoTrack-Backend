@@ -85,18 +85,17 @@ def list_test_cases(
     ),
     search: str | None = Query(
         default=None,
-        min_length=1,
         max_length=255,
         description="Search by test name or test code",
-    ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active Test Cases",
     ),
     department_id: int | None = Query(
         default=None,
         gt=0,
         description="Filter by Department ID",
+    ),
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active test cases, false for inactive test cases)",
     ),
 ):
     """
@@ -111,11 +110,11 @@ def list_test_cases(
 
     return test_case_service.list_test_cases(
         db,
-        skip=skip,
-        limit=limit,
-        search=search,
-        active_only=active_only,
-        department_id=department_id,
+        skip=skip if isinstance(skip, int) else 0,
+        limit=limit if isinstance(limit, int) else 50,
+        search=search if isinstance(search, str) else None,
+        department_id=department_id if isinstance(department_id, int) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
 
 
@@ -190,9 +189,9 @@ def get_test_case_with_parameters(
         gt=0,
         description="Test Case ID",
     ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active test parameters",
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter parameters by active status (true for active only, false for inactive only)",
     ),
 ):
     """
@@ -207,7 +206,7 @@ def get_test_case_with_parameters(
     )
     params = [
         p for p in test_case.parameters
-        if (not active_only or p.is_active)
+        if (is_active is None or p.is_active == is_active)
     ]
     params.sort(key=lambda p: (p.display_order, p.id))
 

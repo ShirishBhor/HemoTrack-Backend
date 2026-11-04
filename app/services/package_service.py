@@ -61,16 +61,16 @@ def list_packages(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    active_only: bool = True,
     department_id: int | None = None,
+    is_active: bool | None = None,
 ) -> list[Package]:
     """
     List packages with pagination, search, and active/department filtering.
     """
     query = select(Package).options(*_package_options())
 
-    if bool(active_only):
-        query = query.where(Package.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(Package.is_active.is_(is_active))
 
     if search and isinstance(search, str):
         search_term = f"%{search.strip()}%"

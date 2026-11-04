@@ -55,17 +55,16 @@ def list_packages(
     limit: int = Query(default=50, ge=1, le=200),
     search: str | None = Query(
         default=None,
-        min_length=1,
         max_length=150,
         description="Search by package name or code",
-    ),
-    active_only: bool = Query(
-        default=True,
-        description="Filter only active packages",
     ),
     department_id: int | None = Query(
         default=None,
         description="Filter by department ID",
+    ),
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active packages, false for inactive packages)",
     ),
 ):
     """List laboratory packages with search, pagination, and department filter."""
@@ -74,8 +73,8 @@ def list_packages(
         skip=skip if isinstance(skip, int) else 0,
         limit=limit if isinstance(limit, int) else 50,
         search=search if isinstance(search, str) else None,
-        active_only=active_only if isinstance(active_only, bool) else True,
         department_id=department_id if isinstance(department_id, int) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
 
 
@@ -112,7 +111,7 @@ def search_packages(
         skip=skip if isinstance(skip, int) else 0,
         limit=limit if isinstance(limit, int) else 50,
         search=q,
-        active_only=True,
+        is_active=True,
     )
 
 

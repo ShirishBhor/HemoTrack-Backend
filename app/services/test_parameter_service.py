@@ -130,9 +130,9 @@ def list_test_parameters(
     db: Session,
     test_case_id: int | None = None,
     search: str | None = None,
-    active_only: bool = True,
     skip: int = 0,
     limit: int = 50,
+    is_active: bool | None = None,
 ) -> list[TestParameter]:
     """
     Return Test Parameters with optional filtering, search, and pagination.
@@ -144,8 +144,8 @@ def list_test_parameters(
             TestParameter.test_case_id == test_case_id
         )
 
-    if active_only:
-        query = query.where(TestParameter.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(TestParameter.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip()}%"
@@ -156,14 +156,16 @@ def list_test_parameters(
             )
         )
 
+    safe_skip = skip if isinstance(skip, int) else 0
+    safe_limit = limit if isinstance(limit, int) else 50
     query = (
         query.order_by(
             TestParameter.test_case_id,
             TestParameter.display_order,
             TestParameter.id,
         )
-        .offset(skip)
-        .limit(limit)
+        .offset(safe_skip)
+        .limit(safe_limit)
     )
 
     return list(db.scalars(query).all())
@@ -752,7 +754,7 @@ def validate_formula_for_test_case(
 def list_reference_ranges(
     db: Session,
     parameter_id: int,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> list[ParameterReferenceRange]:
     """
     List age/gender reference ranges for a parameter.
@@ -763,8 +765,8 @@ def list_reference_ranges(
         ParameterReferenceRange.parameter_id == parameter_id
     )
 
-    if active_only:
-        query = query.where(ParameterReferenceRange.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(ParameterReferenceRange.is_active.is_(is_active))
 
     query = query.order_by(
         ParameterReferenceRange.min_age_days.asc(),

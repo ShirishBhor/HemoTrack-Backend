@@ -71,8 +71,8 @@ def list_test_cases(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    active_only: bool = True,
     department_id: int | None = None,
+    is_active: bool | None = None,
 ) -> list[TestCase]:
     """
     Return Test Cases with:
@@ -85,11 +85,9 @@ def list_test_cases(
 
     query = select(TestCase)
 
-    # Return only active tests by default
-    if active_only:
-        query = query.where(
-            TestCase.is_active.is_(True)
-        )
+    # Return by is_active
+    if isinstance(is_active, bool):
+        query = query.where(TestCase.is_active.is_(is_active))
 
     # Search by test name or test code
     if search:
@@ -109,11 +107,13 @@ def list_test_cases(
     if department_id is not None:
         query = query.where(TestCase.department_id == department_id)
 
+    safe_skip = skip if isinstance(skip, int) else 0
+    safe_limit = limit if isinstance(limit, int) else 50
     query = (
         query
         .order_by(TestCase.name.asc())
-        .offset(skip)
-        .limit(limit)
+        .offset(safe_skip)
+        .limit(safe_limit)
     )
 
     return list(

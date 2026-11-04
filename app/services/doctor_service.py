@@ -42,13 +42,13 @@ def count_doctors(
     db: Session,
     *,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> int:
     """Return the total number of doctors matching the given filters."""
     query = select(func.count(Doctor.id))
 
-    if active_only:
-        query = query.where(Doctor.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(Doctor.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"
@@ -69,12 +69,12 @@ def list_doctors(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> list[Doctor]:
     query = select(Doctor)
 
-    if active_only:
-        query = query.where(Doctor.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(Doctor.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"

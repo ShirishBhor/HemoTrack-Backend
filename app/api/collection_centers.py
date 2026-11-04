@@ -77,13 +77,12 @@ def list_collection_centers(
     ),
     search: str | None = Query(
         default=None,
-        min_length=1,
         max_length=255,
-        description="Search by name, contact person, phone, or email",
+        description="Search by name, contact person, phone, email, or address",
     ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active collection centers",
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active collection centers, false for inactive collection centers)",
     ),
 ):
     """
@@ -93,10 +92,16 @@ def list_collection_centers(
     pagination controls without a separate request.
     """
     total = collection_center_service.count_collection_centers(
-        db, search=search, active_only=active_only
+        db,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
     items = collection_center_service.list_collection_centers(
-        db, skip=skip, limit=limit, search=search, active_only=active_only
+        db,
+        skip=skip if isinstance(skip, int) else 0,
+        limit=limit if isinstance(limit, int) else 50,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
     return CollectionCenterListResponse(total=total, items=items)
 

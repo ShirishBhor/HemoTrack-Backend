@@ -69,13 +69,12 @@ def list_doctors(
     ),
     search: str | None = Query(
         default=None,
-        min_length=1,
         max_length=255,
         description="Search by name, phone, or specialization",
     ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active doctors",
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active doctors, false for inactive doctors)",
     ),
 ):
     """
@@ -84,9 +83,17 @@ def list_doctors(
     Returns total count alongside items so clients can build
     pagination controls without a separate request.
     """
-    total = doctor_service.count_doctors(db, search=search, active_only=active_only)
+    total = doctor_service.count_doctors(
+        db,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
+    )
     items = doctor_service.list_doctors(
-        db, skip=skip, limit=limit, search=search, active_only=active_only
+        db,
+        skip=skip if isinstance(skip, int) else 0,
+        limit=limit if isinstance(limit, int) else 50,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
     return DoctorListResponse(total=total, items=items)
 

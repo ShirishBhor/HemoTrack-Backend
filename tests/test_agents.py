@@ -280,11 +280,11 @@ class TestAgentAPI(unittest.TestCase):
         self.assertEqual(deact_again.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Excluded from active_only list
-        list_active = self.client.get("/api/v1/agents?active_only=true", headers=self.admin_headers)
+        list_active = self.client.get("/api/v1/agents?is_active=true", headers=self.admin_headers)
         self.assertEqual(list_active.json()["total"], 0)
 
         # Included when active_only=false
-        list_all = self.client.get("/api/v1/agents?active_only=false", headers=self.admin_headers)
+        list_all = self.client.get("/api/v1/agents", headers=self.admin_headers)
         self.assertEqual(list_all.json()["total"], 1)
 
         # Admin reactivates

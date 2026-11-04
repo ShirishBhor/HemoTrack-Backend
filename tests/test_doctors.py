@@ -215,7 +215,7 @@ class TestDoctorEnhancements(unittest.TestCase):
         self.assertEqual(deact_again.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Active only listing excludes deactivated doctor
-        list_res = self.client.get("/api/v1/doctors?active_only=true", headers=self.admin_headers)
+        list_res = self.client.get("/api/v1/doctors?is_active=true", headers=self.admin_headers)
         self.assertEqual(list_res.json()["total"], 0)
 
         # Reactivate

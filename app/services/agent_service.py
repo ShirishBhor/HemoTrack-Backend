@@ -51,13 +51,13 @@ def count_agents(
     db: Session,
     *,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> int:
     """Return the total number of agents matching the given filters."""
     query = select(func.count(Agent.id))
 
-    if active_only:
-        query = query.where(Agent.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(Agent.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"
@@ -66,6 +66,7 @@ def count_agents(
                 func.lower(Agent.name).like(pattern),
                 func.lower(Agent.phone).like(pattern),
                 func.lower(Agent.email).like(pattern),
+                func.lower(Agent.address).like(pattern),
             )
         )
 
@@ -78,12 +79,12 @@ def list_agents(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> list[Agent]:
     query = select(Agent)
 
-    if active_only:
-        query = query.where(Agent.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(Agent.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"
@@ -92,6 +93,7 @@ def list_agents(
                 func.lower(Agent.name).like(pattern),
                 func.lower(Agent.phone).like(pattern),
                 func.lower(Agent.email).like(pattern),
+                func.lower(Agent.address).like(pattern),
             )
         )
 

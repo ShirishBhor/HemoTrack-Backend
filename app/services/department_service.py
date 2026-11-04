@@ -44,12 +44,12 @@ def list_departments(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> list[Department]:
     query = select(Department)
 
-    if active_only:
-        query = query.where(Department.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(Department.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip()}%"
@@ -60,10 +60,12 @@ def list_departments(
             )
         )
 
+    safe_skip = skip if isinstance(skip, int) else 0
+    safe_limit = limit if isinstance(limit, int) else 50
     query = (
         query.order_by(Department.name.asc())
-        .offset(skip)
-        .limit(limit)
+        .offset(safe_skip)
+        .limit(safe_limit)
     )
 
     return list(db.scalars(query).all())

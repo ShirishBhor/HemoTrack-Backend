@@ -49,18 +49,20 @@ def list_departments(
     limit: int = Query(default=50, ge=1, le=200),
     search: str | None = Query(
         default=None,
-        min_length=1,
         max_length=150,
     ),
-    active_only: bool = True,
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active departments, false for inactive departments)",
+    ),
 ):
     """List departments with search and pagination."""
     return department_service.list_departments(
         db,
-        skip=skip,
-        limit=limit,
-        search=search,
-        active_only=active_only,
+        skip=skip if isinstance(skip, int) else 0,
+        limit=limit if isinstance(limit, int) else 50,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
 
 
@@ -96,7 +98,7 @@ def search_departments(
         skip=skip,
         limit=limit,
         search=q,
-        active_only=True,
+        is_active=True,
     )
 
 

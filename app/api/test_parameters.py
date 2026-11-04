@@ -97,17 +97,16 @@ def get_parameters(
     search: Annotated[
         str | None,
         Query(
-            min_length=1,
             max_length=255,
             description="Search by parameter name or parameter code",
         ),
     ] = None,
-    active_only: Annotated[
-        bool,
+    is_active: Annotated[
+        bool | None,
         Query(
-            description="Return only active Test Parameters",
+            description="Filter by active status (true for active test parameters, false for inactive test parameters)",
         ),
-    ] = True,
+    ] = None,
     skip: Annotated[
         int,
         Query(
@@ -136,10 +135,10 @@ def get_parameters(
     return list_test_parameters(
         db=db,
         test_case_id=test_case_id,
-        search=search,
-        active_only=active_only,
-        skip=skip,
-        limit=limit,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
+        skip=skip if isinstance(skip, int) else 0,
+        limit=limit if isinstance(limit, int) else 50,
     )
 
 
@@ -347,9 +346,9 @@ def get_parameter_reference_ranges(
         gt=0,
         description="Test Parameter ID",
     ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active reference ranges",
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active reference ranges, false for inactive reference ranges)",
     ),
 ):
     """
@@ -358,7 +357,7 @@ def get_parameter_reference_ranges(
     return list_reference_ranges(
         db=db,
         parameter_id=test_parameter_id,
-        active_only=active_only,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
 
 

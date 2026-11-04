@@ -252,7 +252,7 @@ class TestPackageMasterModule(unittest.TestCase):
         self.assertFalse(deact.is_active)
 
         # Active-only list should exclude it
-        active_pkgs = packages.list_packages(db=self.db, _=self.admin, active_only=True)
+        active_pkgs = packages.list_packages(db=self.db, _=self.admin, is_active=True)
         self.assertEqual(len(active_pkgs), 0)
 
         # Reactivate

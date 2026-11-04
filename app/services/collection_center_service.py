@@ -51,13 +51,13 @@ def count_collection_centers(
     db: Session,
     *,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> int:
     """Return the total number of collection centers matching the given filters."""
     query = select(func.count(CollectionCenter.id))
 
-    if active_only:
-        query = query.where(CollectionCenter.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(CollectionCenter.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"
@@ -67,6 +67,7 @@ def count_collection_centers(
                 func.lower(CollectionCenter.contact_person).like(pattern),
                 func.lower(CollectionCenter.phone).like(pattern),
                 func.lower(CollectionCenter.email).like(pattern),
+                func.lower(CollectionCenter.address).like(pattern),
             )
         )
 
@@ -79,12 +80,12 @@ def list_collection_centers(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    active_only: bool = True,
+    is_active: bool | None = None,
 ) -> list[CollectionCenter]:
     query = select(CollectionCenter)
 
-    if active_only:
-        query = query.where(CollectionCenter.is_active.is_(True))
+    if isinstance(is_active, bool):
+        query = query.where(CollectionCenter.is_active.is_(is_active))
 
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"
@@ -94,6 +95,7 @@ def list_collection_centers(
                 func.lower(CollectionCenter.contact_person).like(pattern),
                 func.lower(CollectionCenter.phone).like(pattern),
                 func.lower(CollectionCenter.email).like(pattern),
+                func.lower(CollectionCenter.address).like(pattern),
             )
         )
 

@@ -77,13 +77,12 @@ def list_agents(
     ),
     search: str | None = Query(
         default=None,
-        min_length=1,
         max_length=255,
-        description="Search by name, phone, or email",
+        description="Search by name, phone, email, or address",
     ),
-    active_only: bool = Query(
-        default=True,
-        description="Return only active agents",
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status (true for active agents, false for inactive agents)",
     ),
 ):
     """
@@ -93,10 +92,16 @@ def list_agents(
     pagination controls without a separate request.
     """
     total = agent_service.count_agents(
-        db, search=search, active_only=active_only
+        db,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
     items = agent_service.list_agents(
-        db, skip=skip, limit=limit, search=search, active_only=active_only
+        db,
+        skip=skip if isinstance(skip, int) else 0,
+        limit=limit if isinstance(limit, int) else 50,
+        search=search if isinstance(search, str) else None,
+        is_active=is_active if isinstance(is_active, bool) else None,
     )
     return AgentListResponse(total=total, items=items)
 
