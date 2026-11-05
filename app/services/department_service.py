@@ -142,6 +142,17 @@ def update_department(
         ) from exc
 
 
+def update_department_status(
+    db: Session,
+    department_id: int,
+    is_active: bool,
+) -> Department:
+    """Activate or deactivate a department."""
+    if is_active:
+        return reactivate_department(db, department_id)
+    return deactivate_department(db, department_id)
+
+
 def deactivate_department(
     db: Session,
     department_id: int,

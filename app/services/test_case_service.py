@@ -253,6 +253,17 @@ def update_test_case(
     return test_case
 
 
+def update_test_case_status(
+    db: Session,
+    test_case: TestCase,
+    is_active: bool,
+) -> TestCase:
+    """Activate or deactivate a Test Case."""
+    if is_active:
+        return reactivate_test_case(db, test_case)
+    return deactivate_test_case(db, test_case)
+
+
 def deactivate_test_case(
     db: Session,
     test_case: TestCase,

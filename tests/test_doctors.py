@@ -203,14 +203,14 @@ class TestDoctorEnhancements(unittest.TestCase):
 
         # Deactivate
         deact_res = self.client.patch(
-            f"/api/v1/doctors/{doc_id}/deactivate", headers=self.admin_headers
+            f"/api/v1/doctors/{doc_id}/status", json={"is_active": False}, headers=self.admin_headers
         )
         self.assertEqual(deact_res.status_code, status.HTTP_200_OK)
         self.assertFalse(deact_res.json()["is_active"])
 
         # Second deactivate should return 400
         deact_again = self.client.patch(
-            f"/api/v1/doctors/{doc_id}/deactivate", headers=self.admin_headers
+            f"/api/v1/doctors/{doc_id}/status", json={"is_active": False}, headers=self.admin_headers
         )
         self.assertEqual(deact_again.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -220,7 +220,7 @@ class TestDoctorEnhancements(unittest.TestCase):
 
         # Reactivate
         react_res = self.client.patch(
-            f"/api/v1/doctors/{doc_id}/reactivate", headers=self.admin_headers
+            f"/api/v1/doctors/{doc_id}/status", json={"is_active": True}, headers=self.admin_headers
         )
         self.assertEqual(react_res.status_code, status.HTTP_200_OK)
         self.assertTrue(react_res.json()["is_active"])

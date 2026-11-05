@@ -289,7 +289,8 @@ class TestAgentAPI(unittest.TestCase):
 
         # Admin reactivates
         react_res = self.client.patch(
-            f"/api/v1/agents/{agent_id}/reactivate",
+            f"/api/v1/agents/{agent_id}/status",
+            json={"is_active": True},
             headers=self.admin_headers,
         )
         self.assertEqual(react_res.status_code, status.HTTP_200_OK)

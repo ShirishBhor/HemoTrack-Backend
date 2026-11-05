@@ -10,8 +10,7 @@ Available operations:
 - POST   /agents                      — Create a new agent
 - GET    /agents/{id}                 — Get an agent by ID
 - PATCH  /agents/{id}                 — Update an agent
-- PATCH  /agents/{id}/deactivate      — Soft-delete (deactivate) an agent
-- PATCH  /agents/{id}/reactivate      — Restore a deactivated agent
+- PATCH  /agents/{id}/status          — Activate or deactivate an agent
 """
 
 from datetime import date
@@ -21,6 +20,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import User, UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.agent import (
     AgentCreate,
     AgentListResponse,
@@ -157,48 +157,30 @@ def update_agent(
     Partially update an existing agent.
 
     Only ADMIN, LAB_MANAGER, and RECEPTIONIST can update agents.
-    To change the active status use /deactivate or /reactivate.
+    To change the active status use /status.
     """
     agent = agent_service.get_agent_or_404(db, agent_id)
     return agent_service.update_agent(db, agent, payload)
 
 
 # ============================================================
-# DEACTIVATE AGENT
+# UPDATE AGENT STATUS
 # ============================================================
 
-@router.patch("/{agent_id}/deactivate", response_model=AgentRead)
-def deactivate_agent(
+@router.patch("/{agent_id}/status", response_model=AgentRead)
+def update_agent_status(
+    payload: StatusUpdate,
     db: DbSession,
     _: AgentManageUser,
     agent_id: int = Path(..., gt=0, description="Agent ID"),
 ):
     """
-    Deactivate an agent (soft-delete).
+    Activate or deactivate an agent.
 
-    Only ADMIN and LAB_MANAGER can deactivate agents.
+    Only ADMIN and LAB_MANAGER can change agent status.
     """
     agent = agent_service.get_agent_or_404(db, agent_id)
-    return agent_service.deactivate_agent(db, agent)
-
-
-# ============================================================
-# REACTIVATE AGENT
-# ============================================================
-
-@router.patch("/{agent_id}/reactivate", response_model=AgentRead)
-def reactivate_agent(
-    db: DbSession,
-    _: AgentManageUser,
-    agent_id: int = Path(..., gt=0, description="Agent ID"),
-):
-    """
-    Reactivate a previously deactivated agent.
-
-    Only ADMIN and LAB_MANAGER can reactivate agents.
-    """
-    agent = agent_service.get_agent_or_404(db, agent_id)
-    return agent_service.reactivate_agent(db, agent)
+    return agent_service.update_agent_status(db, agent, payload.is_active)
 
 
 # ============================================================

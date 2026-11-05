@@ -234,6 +234,17 @@ def update_test_parameter(
         ) from exc
 
 
+def update_test_parameter_status(
+    db: Session,
+    test_parameter_id: int,
+    is_active: bool,
+) -> TestParameter:
+    """Activate or deactivate a Test Parameter."""
+    if is_active:
+        return reactivate_test_parameter(db, test_parameter_id)
+    return deactivate_test_parameter(db, test_parameter_id)
+
+
 def deactivate_test_parameter(
     db: Session,
     test_parameter_id: int,

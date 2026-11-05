@@ -180,6 +180,13 @@ def update_doctor(
     return doctor
 
 
+def update_doctor_status(db: Session, doctor: Doctor, is_active: bool) -> Doctor:
+    """Activate or deactivate a doctor."""
+    if is_active:
+        return reactivate_doctor(db, doctor)
+    return deactivate_doctor(db, doctor)
+
+
 def deactivate_doctor(db: Session, doctor: Doctor) -> Doctor:
     """Soft-delete a doctor by setting is_active = False."""
     if not doctor.is_active:

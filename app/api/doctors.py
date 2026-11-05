@@ -10,8 +10,7 @@ Available operations:
 - POST   /doctors                      — Create a new doctor
 - GET    /doctors/{id}                 — Get a doctor by ID
 - PATCH  /doctors/{id}                 — Update a doctor
-- PATCH  /doctors/{id}/deactivate      — Soft-delete (deactivate) a doctor
-- PATCH  /doctors/{id}/reactivate      — Restore a deactivated doctor
+- PATCH  /doctors/{id}/status             — Activate or deactivate a doctor
 """
 
 from typing import Annotated
@@ -20,6 +19,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import User, UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.doctor import DoctorCreate, DoctorListResponse, DoctorRead, DoctorUpdate
 from app.services import doctor_service
 
@@ -149,46 +149,27 @@ def update_doctor(
     Partially update an existing doctor.
 
     Only ADMIN, LAB_MANAGER, and RECEPTIONIST can update doctors.
-    To change the active status use /deactivate or /reactivate.
+    To change the active status use /status.
     """
     doctor = doctor_service.get_doctor_or_404(db, doctor_id)
     return doctor_service.update_doctor(db, doctor, payload)
 
 
 # ============================================================
-# DEACTIVATE DOCTOR
+# UPDATE DOCTOR STATUS
 # ============================================================
 
-@router.patch("/{doctor_id}/deactivate", response_model=DoctorRead)
-def deactivate_doctor(
+@router.patch("/{doctor_id}/status", response_model=DoctorRead)
+def update_doctor_status(
+    payload: StatusUpdate,
     db: DbSession,
     _: DoctorManageUser,
     doctor_id: int = Path(..., gt=0, description="Doctor ID"),
 ):
     """
-    Deactivate a doctor (soft-delete).
+    Activate or deactivate a doctor.
 
-    The record is preserved so existing bill references remain intact.
-    Only ADMIN and LAB_MANAGER can deactivate doctors.
+    Only ADMIN and LAB_MANAGER can change doctor status.
     """
     doctor = doctor_service.get_doctor_or_404(db, doctor_id)
-    return doctor_service.deactivate_doctor(db, doctor)
-
-
-# ============================================================
-# REACTIVATE DOCTOR
-# ============================================================
-
-@router.patch("/{doctor_id}/reactivate", response_model=DoctorRead)
-def reactivate_doctor(
-    db: DbSession,
-    _: DoctorManageUser,
-    doctor_id: int = Path(..., gt=0, description="Doctor ID"),
-):
-    """
-    Reactivate a previously deactivated doctor.
-
-    Only ADMIN and LAB_MANAGER can reactivate doctors.
-    """
-    doctor = doctor_service.get_doctor_or_404(db, doctor_id)
-    return doctor_service.reactivate_doctor(db, doctor)
+    return doctor_service.update_doctor_status(db, doctor, payload.is_active)

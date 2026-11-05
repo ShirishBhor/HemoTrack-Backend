@@ -1,3 +1,4 @@
+from app.schemas.common import StatusUpdate
 from app.schemas.bill import (
     BillCancel,
     BillCreate,
@@ -84,6 +85,7 @@ from app.schemas.expense import ExpenseCreate, ExpenseRead
 from app.schemas.refund import RefundCreate, RefundRead
 
 __all__ = [
+    "StatusUpdate",
     "UserCreate",
     "UserRead",
     "UserUpdate",

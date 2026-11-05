@@ -191,6 +191,13 @@ def update_agent(
     return agent
 
 
+def update_agent_status(db: Session, agent: Agent, is_active: bool) -> Agent:
+    """Activate or deactivate an agent."""
+    if is_active:
+        return reactivate_agent(db, agent)
+    return deactivate_agent(db, agent)
+
+
 def deactivate_agent(db: Session, agent: Agent) -> Agent:
     """Soft-delete an agent by setting is_active = False."""
     if not agent.is_active:

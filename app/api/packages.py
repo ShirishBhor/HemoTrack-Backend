@@ -9,7 +9,7 @@ Provides:
 - Listing and searching packages with filtering
 - Getting package details with included tests
 - Updating package metadata and test mappings
-- Deactivating and reactivating packages
+- Updating package active status (activate/deactivate)
 """
 
 from typing import Annotated
@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import User, UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.package import (
     PackageCreate,
     PackageRead,
@@ -152,34 +153,19 @@ def update_package(
 
 
 @router.patch(
-    "/{package_id}/deactivate",
+    "/{package_id}/status",
     response_model=PackageRead,
-    summary="Deactivate package",
+    summary="Update package status",
 )
-def deactivate_package(
+def update_package_status(
+    payload: StatusUpdate,
     db: DbSession,
     _: PackageWriteUser,
     package_id: int = Path(..., gt=0),
 ):
-    """Soft-delete / deactivate a package."""
-    return package_service.deactivate_package(
+    """Activate or deactivate a package. ADMIN and LAB_MANAGER only."""
+    return package_service.update_package_status(
         db,
-        package_id,
-    )
-
-
-@router.patch(
-    "/{package_id}/reactivate",
-    response_model=PackageRead,
-    summary="Reactivate package",
-)
-def reactivate_package(
-    db: DbSession,
-    _: PackageWriteUser,
-    package_id: int = Path(..., gt=0),
-):
-    """Reactivate a previously deactivated package."""
-    return package_service.reactivate_package(
-        db,
-        package_id,
+        package_id=package_id,
+        is_active=payload.is_active,
     )

@@ -193,6 +193,15 @@ def update_collection_center(
     return center
 
 
+def update_collection_center_status(
+    db: Session, center: CollectionCenter, is_active: bool
+) -> CollectionCenter:
+    """Activate or deactivate a collection center."""
+    if is_active:
+        return reactivate_collection_center(db, center)
+    return deactivate_collection_center(db, center)
+
+
 def deactivate_collection_center(db: Session, center: CollectionCenter) -> CollectionCenter:
     """Soft-delete a collection center by setting is_active = False."""
     if not center.is_active:

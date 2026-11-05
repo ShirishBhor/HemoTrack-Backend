@@ -10,8 +10,7 @@ Available operations:
 - POST   /collection-centers                      — Create a new collection center
 - GET    /collection-centers/{id}                 — Get a collection center by ID
 - PATCH  /collection-centers/{id}                 — Update a collection center
-- PATCH  /collection-centers/{id}/deactivate      — Soft-delete (deactivate) a collection center
-- PATCH  /collection-centers/{id}/reactivate      — Restore a deactivated collection center
+- PATCH  /collection-centers/{id}/status          — Activate or deactivate a collection center
 """
 
 from datetime import date
@@ -21,6 +20,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import User, UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.collection_center import (
     CollectionCenterCreate,
     CollectionCenterListResponse,
@@ -157,48 +157,30 @@ def update_collection_center(
     Partially update an existing collection center.
 
     Only ADMIN, LAB_MANAGER, and RECEPTIONIST can update collection centers.
-    To change the active status use /deactivate or /reactivate.
+    To change the active status use /status.
     """
     center = collection_center_service.get_collection_center_or_404(db, center_id)
     return collection_center_service.update_collection_center(db, center, payload)
 
 
 # ============================================================
-# DEACTIVATE COLLECTION CENTER
+# UPDATE COLLECTION CENTER STATUS
 # ============================================================
 
-@router.patch("/{center_id}/deactivate", response_model=CollectionCenterRead)
-def deactivate_collection_center(
+@router.patch("/{center_id}/status", response_model=CollectionCenterRead)
+def update_collection_center_status(
+    payload: StatusUpdate,
     db: DbSession,
     _: CollectionCenterManageUser,
     center_id: int = Path(..., gt=0, description="Collection Center ID"),
 ):
     """
-    Deactivate a collection center (soft-delete).
+    Activate or deactivate a collection center.
 
-    Only ADMIN and LAB_MANAGER can deactivate collection centers.
+    Only ADMIN and LAB_MANAGER can change collection center status.
     """
     center = collection_center_service.get_collection_center_or_404(db, center_id)
-    return collection_center_service.deactivate_collection_center(db, center)
-
-
-# ============================================================
-# REACTIVATE COLLECTION CENTER
-# ============================================================
-
-@router.patch("/{center_id}/reactivate", response_model=CollectionCenterRead)
-def reactivate_collection_center(
-    db: DbSession,
-    _: CollectionCenterManageUser,
-    center_id: int = Path(..., gt=0, description="Collection Center ID"),
-):
-    """
-    Reactivate a previously deactivated collection center.
-
-    Only ADMIN and LAB_MANAGER can reactivate collection centers.
-    """
-    center = collection_center_service.get_collection_center_or_404(db, center_id)
-    return collection_center_service.reactivate_collection_center(db, center)
+    return collection_center_service.update_collection_center_status(db, center, payload.is_active)
 
 
 # ============================================================

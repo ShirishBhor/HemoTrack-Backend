@@ -159,7 +159,8 @@ class TestDepartmentAPIs(unittest.TestCase):
 
         # Deactivate
         deact_res = self.client.patch(
-            f"/api/v1/departments/{dept_id}/deactivate",
+            f"/api/v1/departments/{dept_id}/status",
+            json={"is_active": False},
             headers=self.admin_headers,
         )
         self.assertEqual(deact_res.status_code, status.HTTP_200_OK)
@@ -167,7 +168,8 @@ class TestDepartmentAPIs(unittest.TestCase):
 
         # Reactivate
         react_res = self.client.patch(
-            f"/api/v1/departments/{dept_id}/reactivate",
+            f"/api/v1/departments/{dept_id}/status",
+            json={"is_active": True},
             headers=self.admin_headers,
         )
         self.assertEqual(react_res.status_code, status.HTTP_200_OK)

@@ -248,7 +248,7 @@ class TestPackageMasterModule(unittest.TestCase):
         pkg_id = created.id
 
         # Deactivate
-        deact = packages.deactivate_package(db=self.db, _=self.admin, package_id=pkg_id)
+        deact = packages.update_package_status(payload=packages.StatusUpdate(is_active=False), db=self.db, _=self.admin, package_id=pkg_id)
         self.assertFalse(deact.is_active)
 
         # Active-only list should exclude it
@@ -256,7 +256,7 @@ class TestPackageMasterModule(unittest.TestCase):
         self.assertEqual(len(active_pkgs), 0)
 
         # Reactivate
-        react = packages.reactivate_package(db=self.db, _=self.admin, package_id=pkg_id)
+        react = packages.update_package_status(payload=packages.StatusUpdate(is_active=True), db=self.db, _=self.admin, package_id=pkg_id)
         self.assertTrue(react.is_active)
 
     def test_08_schema_code_validation(self):

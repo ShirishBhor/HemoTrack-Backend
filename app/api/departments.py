@@ -3,7 +3,7 @@ Author: Nikhil Yuvraj Mole
 Date: 2026-10-22
 
 Description:
-Provides CRUD, search, deactivate, and reactivate
+Provides CRUD, search, and status update (activate/deactivate)
 operations for laboratory Departments.
 """
 
@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import User, UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.department import (
     DepartmentCreate,
     DepartmentRead,
@@ -137,32 +138,18 @@ def update_department(
 
 
 @router.patch(
-    "/{department_id}/deactivate",
+    "/{department_id}/status",
     response_model=DepartmentRead,
 )
-def deactivate_department(
+def update_department_status(
+    department_id: int,
+    payload: StatusUpdate,
     db: DbSession,
     _: DepartmentWriteUser,
-    department_id: int = Path(..., gt=0),
 ):
-    """Soft-delete a department."""
-    return department_service.deactivate_department(
+    """Activate or deactivate a department."""
+    return department_service.update_department_status(
         db,
-        department_id,
-    )
-
-
-@router.patch(
-    "/{department_id}/reactivate",
-    response_model=DepartmentRead,
-)
-def reactivate_department(
-    db: DbSession,
-    _: DepartmentWriteUser,
-    department_id: int = Path(..., gt=0),
-):
-    """Reactivate an inactive department."""
-    return department_service.reactivate_department(
-        db,
-        department_id,
+        department_id=department_id,
+        is_active=payload.is_active,
     )

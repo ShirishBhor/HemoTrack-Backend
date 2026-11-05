@@ -16,6 +16,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.test_parameter import (
     FormulaValidationRequest,
     FormulaValidationResponse,
@@ -29,16 +30,13 @@ from app.schemas.test_parameter import (
 from app.services.test_parameter_service import (
     create_reference_range,
     create_test_parameter,
-    deactivate_test_parameter,
-    delete_reference_range,
-    delete_test_parameter,
     get_distinct_units,
     get_test_parameter_or_404,
     list_reference_ranges,
     list_test_parameters,
-    reactivate_test_parameter,
     update_reference_range,
     update_test_parameter,
+    update_test_parameter_status,
     validate_formula_for_test_case,
 )
 
@@ -245,15 +243,16 @@ def update_parameter(
 
 
 # ============================================================
-# DEACTIVATE TEST PARAMETER
+# UPDATE TEST PARAMETER STATUS
 # ============================================================
 
 @router.patch(
-    "/{test_parameter_id}/deactivate",
+    "/{test_parameter_id}/status",
     response_model=TestParameterRead,
     dependencies=[Depends(TestParameterWriteUser)],
 )
-def deactivate_parameter(
+def update_parameter_status(
+    payload: StatusUpdate,
     db: DbSession,
     test_parameter_id: int = Path(
         ...,
@@ -262,71 +261,14 @@ def deactivate_parameter(
     ),
 ):
     """
-    Deactivate a Test Parameter.
+    Activate or deactivate a Test Parameter.
 
-    Only ADMIN and LAB_MANAGER can deactivate Test Parameters.
-
-    The record is not permanently deleted.
-    It is marked as inactive so existing references remain safe.
+    Only ADMIN and LAB_MANAGER can change Test Parameter status.
     """
-    return deactivate_test_parameter(
+    return update_test_parameter_status(
         db=db,
         test_parameter_id=test_parameter_id,
-    )
-
-
-# ============================================================
-# REACTIVATE TEST PARAMETER
-# ============================================================
-
-@router.patch(
-    "/{test_parameter_id}/reactivate",
-    response_model=TestParameterRead,
-    dependencies=[Depends(TestParameterWriteUser)],
-)
-def reactivate_parameter(
-    db: DbSession,
-    test_parameter_id: int = Path(
-        ...,
-        gt=0,
-        description="Test Parameter ID",
-    ),
-):
-    """
-    Reactivate a previously deactivated Test Parameter.
-
-    Only ADMIN and LAB_MANAGER can reactivate Test Parameters.
-    """
-    return reactivate_test_parameter(
-        db=db,
-        test_parameter_id=test_parameter_id,
-    )
-
-
-# ============================================================
-# DELETE TEST PARAMETER
-# ============================================================
-
-@router.delete(
-    "/{test_parameter_id}",
-    dependencies=[Depends(TestParameterWriteUser)],
-)
-def delete_parameter(
-    db: DbSession,
-    test_parameter_id: int = Path(
-        ...,
-        gt=0,
-        description="Test Parameter ID",
-    ),
-):
-    """
-    Permanently delete a Test Parameter.
-
-    Only ADMIN and LAB_MANAGER can delete Test Parameters.
-    """
-    return delete_test_parameter(
-        db=db,
-        test_parameter_id=test_parameter_id,
+        is_active=payload.is_active,
     )
 
 
@@ -411,27 +353,4 @@ def update_range(
         db=db,
         range_id=range_id,
         payload=payload,
-    )
-
-
-@router.delete(
-    "/reference-ranges/{range_id}",
-    dependencies=[Depends(TestParameterWriteUser)],
-)
-def delete_range(
-    db: DbSession,
-    range_id: int = Path(
-        ...,
-        gt=0,
-        description="Reference Range ID",
-    ),
-):
-    """
-    Delete a reference range.
-
-    Only ADMIN and LAB_MANAGER can delete reference ranges.
-    """
-    return delete_reference_range(
-        db=db,
-        range_id=range_id,
     )

@@ -10,7 +10,7 @@ Available operations:
 - Create a Test Case
 - Get a Test Case by ID
 - Update a Test Case
-- Deactivate a Test Case
+- Update Test Case status (activate/deactivate)
 
 The Test Case API stores master test definitions only.
 Patient-specific test results and discounts will be implemented separately.
@@ -22,6 +22,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, status
 
 from app.core.deps import CurrentUser, DbSession, require_roles
 from app.models.user import User, UserRole
+from app.schemas.common import StatusUpdate
 from app.schemas.test_case import (
     TestCaseCreate,
     TestCaseRead,
@@ -261,14 +262,15 @@ def update_test_case(
 
 
 # ============================================================
-# DEACTIVATE TEST CASE
+# UPDATE TEST CASE STATUS
 # ============================================================
 
 @router.patch(
-    "/{test_case_id}/deactivate",
+    "/{test_case_id}/status",
     response_model=TestCaseRead,
 )
-def deactivate_test_case(
+def update_test_case_status(
+    payload: StatusUpdate,
     db: DbSession,
     _: TestCaseWriteUser,
     test_case_id: int = Path(
@@ -278,55 +280,18 @@ def deactivate_test_case(
     ),
 ):
     """
-    Deactivate a Test Case.
+    Activate or deactivate a Test Case.
 
-    Only ADMIN and LAB_MANAGER can deactivate Test Cases.
-
-    The record is not permanently deleted.
-    It is marked as inactive so existing references remain safe.
-    """
-
-    test_case = test_case_service.get_test_case_or_404(
-        db,
-        test_case_id,
-    )
-
-    return test_case_service.deactivate_test_case(
-        db,
-        test_case,
-    )
-
-
-# ============================================================
-# REACTIVATE TEST CASE
-# ============================================================
-
-@router.patch(
-    "/{test_case_id}/reactivate",
-    response_model=TestCaseRead,
-)
-def reactivate_test_case(
-    db: DbSession,
-    _: TestCaseWriteUser,
-    test_case_id: int = Path(
-        ...,
-        gt=0,
-        description="Test Case ID",
-    ),
-):
-    """
-    Reactivate a previously deactivated Test Case.
-
-    Only ADMIN and LAB_MANAGER can reactivate Test Cases.
+    Only ADMIN and LAB_MANAGER can change Test Case status.
     """
     test_case = test_case_service.get_test_case_or_404(
         db,
         test_case_id,
     )
-
-    return test_case_service.reactivate_test_case(
+    return test_case_service.update_test_case_status(
         db,
         test_case,
+        is_active=payload.is_active,
     )
 
 

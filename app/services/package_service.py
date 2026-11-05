@@ -261,6 +261,17 @@ def update_package(
     return get_package_or_404(db, package.id)
 
 
+def update_package_status(
+    db: Session,
+    package_id: int,
+    is_active: bool,
+) -> Package:
+    """Activate or deactivate a package."""
+    if is_active:
+        return reactivate_package(db, package_id)
+    return deactivate_package(db, package_id)
+
+
 def deactivate_package(db: Session, package_id: int) -> Package:
     """Soft-delete a package by setting is_active=False."""
     package = get_package_or_404(db, package_id)
